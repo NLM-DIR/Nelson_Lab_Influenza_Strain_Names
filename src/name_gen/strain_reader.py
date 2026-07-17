@@ -11,8 +11,15 @@ Strain ID format:
 
 import requests
 import pycountry
+import argparse
+import json
+import sys
 
 CLB_BASE_URL = "https://api.checklistbank.org"
+
+COL_Version = {
+    1: 315448,
+}
 
 
 def resolve_scientific_name(dataset_key, usage_id, session=None):
@@ -63,14 +70,15 @@ def decode_location(location):
 def decode_strain_id(strain_id, session=None):
     """Break the strain ID into its components and resolve the taxonomy code.
 
-    strain_id = <taxonomy_code>-<month>-<lab_identifier>
-    taxonomy_code = <dataset_key>.<usage_id>
+    strain_id = <taxonomy_code>-<lab_identifier>-<month>
+    taxonomy_code = <usage_id>.<dataset_key>
     """
     # Split into exactly 3 sections. The lab identifier may itself contain
     # additional characters, so limit the split.
-    taxonomy_code, month, lab_identifier = strain_id.split("-", 2)
+    taxonomy_code, lab_identifier, month = strain_id.split("-", 2)
 
-    dataset_key, usage_id = taxonomy_code.split(".", 1)
+    usage_id, dataset_key = taxonomy_code.split(".", 1)
+    dataset_key = COL_Version.get(int(dataset_key))
 
     scientific_name = resolve_scientific_name(dataset_key, usage_id, session=session)
 
@@ -88,22 +96,79 @@ def decode_strain_name(strain_name, session=None):
     """Decode a full influenza strain name into a metadata dictionary."""
     virus_type, host, location, strain_id, year = strain_name.split("/")
 
-    metadata = {
+    sid = decode_strain_id(strain_id, session=session)
+
+    return {
         "virus_type": virus_type,
-        "host": host,
+        "host": {
+            "vernacular_name": host,
+            "scientific_name": sid["scientific_name"],
+            "col_dataset_key": sid["col_dataset_key"],
+            "col_usage_id": sid["col_usage_id"],
+        },
         "location": decode_location(location),
-        "year": year,
+        "date": {
+            "month": sid["month"],
+            "year": year,
+        },
+        "lab_identifier": sid["lab_identifier"],
     }
-    metadata["strain_id"] = decode_strain_id(strain_id, session=session)
-    return metadata
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        prog="strain-read",
+        description=(
+            "Decode an influenza isolate strain name into structured metadata. "
+            "Strain name format: <type>/<host>/<location>/<strain_id>/<year>"
+        ),
+    )
+    parser.add_argument(
+        "strain_name",
+        metavar="STRAIN_NAME",
+        help=(
+            "The strain name to decode, e.g. "
+            "'A/Domestic Chicken/US-NY/3F72J.1-002_NEL26-06/2026'"
+        ),
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
+        help="Write JSON output to a file instead of stdout.",
+    )
+    parser.add_argument(
+        "--indent",
+        type=int,
+        default=2,
+        help="Indentation level for JSON output (default: 2).",
+    )
+    args = parser.parse_args(argv)
+
+    # Reuse a session to avoid re-establishing the connection on repeated calls.
+    with requests.Session() as session:
+        try:
+            result = decode_strain_name(args.strain_name, session=session)
+        except ValueError as exc:
+            # split() failures: malformed strain name or strain ID.
+            print(
+                f"Malformed strain name {args.strain_name!r}: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+        except requests.RequestException as exc:
+            # Network / HTTP errors from ChecklistBank.
+            print(
+                f"Failed to resolve taxonomy for {args.strain_name!r}: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+
+    json.dump(result, args.output, indent=args.indent)
+    args.output.write("\n")
+    return 0
 
 
 if __name__ == "__main__":
-    example = "A/Domestic Chicken/US-NY/315448.3F72J-06-002_NEL26/2026"
-
-    # Reuse a session to avoid re-establishing the connection on repeated calls.
-    with requests.Session() as s:
-        result = decode_strain_name(example, session=s)
-
-    import json
-    print(json.dumps(result, indent=2))
+    sys.exit(main())

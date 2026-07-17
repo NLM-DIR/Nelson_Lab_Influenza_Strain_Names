@@ -3,7 +3,8 @@ import pycountry
 from name_gen import logger
 from name_gen.tools import utils
 import unicodedata
-import difflib
+# import difflib
+from rapidfuzz import process, fuzz
 
 
 def normalize(s):
@@ -13,20 +14,16 @@ def normalize(s):
 
 
 def find_subdivision(subdivisions, subdivision_name):
-    target = normalize(subdivision_name)
     subs = list(subdivisions)
-
-    # 1. exact match on normalized names
-    for s in subs:
-        if normalize(s.name) == target:
-            return s.code
-
-    # 2. fuzzy fallback
-    names = {normalize(s.name): s.code for s in subs}
-    close = difflib.get_close_matches(target, names.keys(), n=1, cutoff=0.85)
-    if close:
-        return names[close[0]]
-
+    choices = {normalize(s.name): s.code for s in subs}
+    match = process.extractOne(
+        normalize(subdivision_name),
+        choices.keys(),
+        scorer=fuzz.token_sort_ratio,   # handles word reordering
+        score_cutoff=70,
+    )
+    if match:
+        return choices[match[0]]
     return None
 
 
