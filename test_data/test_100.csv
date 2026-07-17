@@ -1,0 +1,101 @@
+virus_type,host,location,country,sequence,lab_id,date
+A,Sus scrofa,Yunnan,China,544,MN.26A,2024-04-11
+A,Columba livia,Rio Grande do Sul,Brazil,003,MN.26A,2023-07-23
+A,Columba livia,Sichuan,China,859,MN.26A,2023-10-02
+A,Mustela putorius furo,São Paulo,Brazil,071,MN.26A,2023-01-10
+A,Bos taurus,Rio Grande do Sul,Brazil,053,MN.26A,2024-01-10
+A,Phasianus colchicus,Alberta,Canada,205,MN.26A,2023-01-08
+A,Sus scrofa,Georgia,USA,604,MN.26A,2024-07-26
+A,Falco peregrinus,Guangdong,China,980,MN.26A,2023-03-29
+A,Gallus gallus domesticus,Yunnan,China,479,MN.26A,2026-04-14
+A,Columba livia,,Vietnam,043,MN.26A,2024-10-24
+A,Anas platyrhynchos,Hubei,China,791,MN.26A,2023-05-04
+A,Columba livia,Iowa,USA,333,MN.26A,2026-03-24
+A,Anas platyrhynchos,Western Cape,South Africa,179,MN.26A,2023-05-02
+A,Cygnus olor,Alaska,USA,809,MN.26A,2023-05-11
+A,Homo sapiens,Minnesota,USA,804,MN.26A,2025-09-07
+A,Canis lupus familiaris,Brittany,France,548,MN.26A,2025-07-09
+A,Mustela putorius furo,New South Wales,Australia,937,MN.26A,2023-06-14
+A,Vulpes vulpes,Florida,USA,504,MN.26A,2024-05-11
+A,Phasianus colchicus,Ontario,Canada,194,MN.26A,2023-07-09
+A,Bos taurus,Guangdong,China,768,MN.26A,2025-01-25
+A,Cygnus olor,Yunnan,China,739,MN.26A,2024-03-18
+A,Meleagris gallopavo,,Vietnam,214,MN.26A,2025-01-19
+A,Gallus gallus,Victoria,Australia,226,MN.26A,2024-02-14
+A,Cygnus olor,Rio Grande do Sul,Brazil,545,MN.26A,2025-02-09
+A,Panthera tigris,,Vietnam,379,MN.26A,2025-06-19
+A,Panthera tigris,Washington,USA,828,MN.26A,2026-05-30
+A,Corvus corax,Alaska,USA,223,MN.26A,2024-09-21
+A,Canis lupus familiaris,Alaska,USA,299,MN.26A,2025-02-17
+A,Cygnus olor,Normandy,France,464,MN.26A,2024-02-18
+A,Falco peregrinus,Normandy,France,371,MN.26A,2025-02-07
+A,Equus caballus,Rio Grande do Sul,Brazil,771,MN.26A,2024-05-09
+A,Sus scrofa,,Vietnam,580,MN.26A,2023-10-23
+A,Vulpes vulpes,Tuscany,Italy,752,MN.26A,2025-12-13
+A,Gallus gallus domesticus,,Russia,721,MN.26A,2024-09-09
+A,Corvus corax,Virginia,USA,777,MN.26A,2024-11-16
+A,Corvus corax,Tuscany,Italy,832,MN.26A,2023-08-15
+A,Gallus gallus,New York,USA,150,MN.26A,2023-03-01
+A,Meleagris gallopavo,Florida,USA,259,MN.26A,2025-10-13
+A,Gallus gallus domesticus,,Vietnam,999,MN.26A,2025-05-31
+A,Mustela putorius furo,British Columbia,Canada,898,MN.26A,2024-09-24
+A,Vulpes vulpes,Minnesota,USA,796,MN.26A,2023-02-17
+A,Anas platyrhynchos,São Paulo,Brazil,821,MN.26A,2026-03-02
+A,Panthera tigris,Florida,USA,455,MN.26A,2025-08-06
+A,Anas platyrhynchos,Brittany,France,612,MN.26A,2025-09-26
+A,Panthera tigris,England,UK,840,MN.26A,2025-11-16
+A,Felis catus,,Egypt,656,MN.26A,2026-02-17
+A,Larus argentatus,Virginia,USA,543,MN.26A,2024-11-12
+A,Canis lupus familiaris,Alberta,Canada,924,MN.26A,2023-05-07
+A,Vulpes vulpes,Alaska,USA,570,MN.26A,2025-02-21
+A,Meleagris gallopavo,Minnesota,USA,300,MN.26A,2025-10-25
+A,Felis catus,Rio Grande do Sul,Brazil,386,MN.26A,2023-04-03
+A,Meleagris gallopavo,Manitoba,Canada,491,MN.26A,2025-07-25
+A,Falco peregrinus,Virginia,USA,157,MN.26A,2023-04-18
+A,Homo sapiens,Ontario,Canada,200,MN.26A,2023-08-03
+A,Cygnus olor,Normandy,France,324,MN.26A,2026-06-17
+A,Anas platyrhynchos,Osaka,Japan,878,MN.26A,2025-10-05
+A,Gallus gallus,Sichuan,China,047,MN.26A,2023-03-26
+A,Gallus gallus domesticus,Sichuan,China,758,MN.26A,2024-06-10
+A,Phasianus colchicus,Gauteng,South Africa,090,MN.26A,2023-10-11
+A,Larus argentatus,Iowa,USA,682,MN.26A,2026-04-23
+A,Vulpes vulpes,Tuscany,Italy,714,MN.26A,2025-03-13
+A,Panthera tigris,Jalisco,Mexico,031,MN.26A,2025-05-01
+A,Falco peregrinus,Georgia,USA,202,MN.26A,2023-02-13
+A,Meleagris gallopavo,Sichuan,China,086,MN.26A,2025-01-06
+A,Gallus gallus domesticus,São Paulo,Brazil,703,MN.26A,2025-04-04
+A,Anas platyrhynchos,Brittany,France,050,MN.26A,2025-12-09
+A,Anas platyrhynchos,,Egypt,944,MN.26A,2023-07-08
+A,Felis catus,São Paulo,Brazil,250,MN.26A,2026-03-14
+A,Sus scrofa,,Egypt,978,MN.26A,2026-02-06
+A,Homo sapiens,Jalisco,Mexico,733,MN.26A,2025-04-22
+A,Gallus gallus domesticus,England,UK,882,MN.26A,2026-03-25
+A,Gallus gallus domesticus,Tuscany,Italy,174,MN.26A,2025-07-16
+A,Gallus gallus domesticus,Sichuan,China,289,MN.26A,2023-04-02
+A,Cygnus olor,Alberta,Canada,915,MN.26A,2026-02-04
+A,Gallus gallus domesticus,Brittany,France,467,MN.26A,2023-12-31
+A,Cygnus olor,Normandy,France,925,MN.26A,2026-04-18
+A,Gallus gallus,Guangdong,China,008,MN.26A,2025-03-24
+A,Bos taurus,,Russia,693,MN.26A,2025-07-15
+A,Falco peregrinus,Queensland,Australia,810,MN.26A,2023-05-03
+A,Vulpes vulpes,Hubei,China,879,MN.26A,2024-05-22
+A,Meleagris gallopavo,Tuscany,Italy,488,MN.26A,2024-02-17
+A,Falco peregrinus,Tuscany,Italy,894,MN.26A,2023-08-05
+A,Sus scrofa,Scotland,UK,342,MN.26A,2023-12-14
+A,Corvus corax,British Columbia,Canada,718,MN.26A,2025-07-04
+A,Canis lupus familiaris,Quebec,Canada,794,MN.26A,2024-01-03
+A,Equus caballus,Alberta,Canada,902,MN.26A,2025-12-26
+A,Equus caballus,Lombardy,Italy,891,MN.26A,2024-07-11
+A,Columba livia,Victoria,Australia,683,MN.26A,2023-12-14
+A,Larus argentatus,Florida,USA,009,MN.26A,2025-07-31
+A,Equus caballus,Washington,USA,740,MN.26A,2023-07-15
+A,Anser anser,Western Cape,South Africa,626,MN.26A,2024-06-04
+A,Panthera tigris,Quebec,Canada,849,MN.26A,2024-12-23
+A,Vulpes vulpes,Western Cape,South Africa,889,MN.26A,2025-10-04
+A,Anser anser,Hubei,China,301,MN.26A,2026-04-25
+A,Gallus gallus domesticus,British Columbia,Canada,475,MN.26A,2024-11-21
+A,Sus scrofa,Saxony,Germany,444,MN.26A,2023-04-11
+A,Bos taurus,New York,USA,219,MN.26A,2024-01-05
+A,Anas platyrhynchos,Minnesota,USA,576,MN.26A,2023-02-04
+A,Columba livia,Texas,USA,278,MN.26A,2023-02-18
+A,Corvus corax,Rio Grande do Sul,Brazil,466,MN.26A,2026-04-27

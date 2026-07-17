@@ -1,0 +1,13 @@
+pyproject.toml
+src/name_gen/__init__.py
+src/name_gen/csv_handler.py
+src/name_gen/main.py
+src/name_gen.egg-info/PKG-INFO
+src/name_gen.egg-info/SOURCES.txt
+src/name_gen.egg-info/dependency_links.txt
+src/name_gen.egg-info/entry_points.txt
+src/name_gen.egg-info/top_level.txt
+src/name_gen/tools/host.py
+src/name_gen/tools/location_tools.py
+src/name_gen/tools/phone_code.py
+src/name_gen/utils/normalize.py

@@ -1,0 +1,2 @@
+[console_scripts]
+strain-gen = name_gen.main:main

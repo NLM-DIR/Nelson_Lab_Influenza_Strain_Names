@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "name_gen"
+version = "0.1.0"
+description = "Generate standardized influenza strain names from metadata."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Andrew LaPointe", email = "lapointear@nih.gov" },
+    { name = "Martha Nelson", email = "you@example.com" },
+
+]
+keywords = ["influenza", "strain", "naming", "bioinformatics"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = []
+
+[project.optional-dependencies]
+# dev = ["pytest>=7.0"]
+
+[project.scripts]
+strain-gen = "name_gen.main:main"
+strain-read = "name_gen.strain_reader:main"
+
+[project.urls]
+Repository = "https://github.com/yourusername/name_gen"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,6 @@
+virus_type,host,location,country,sequence,lab_id,date
+A,Homo sapiens,Virginia,USA,001,MN.26A,2026-06-30
+A,Gallus gallus,Alaska,USA,002,MN.26A,2026-06-30
+A,gallus gallus domesticus,New York,USA,002,MN.26A,2026-06-30
+A,Sus scrofa,,China,003,MN.26A,2026-07-25
+A,Anas platyrhynchos,Ontario,Canada,125,MN.26A,2024-02-10

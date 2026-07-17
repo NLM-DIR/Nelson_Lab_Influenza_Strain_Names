@@ -1,0 +1,6 @@
+virus_type,host,location,country,sequence,lab_id,date,strain_name
+A,Homo sapiens,Virginia,USA,001,MN.26A,2026-06-30,A/US-VA/6MB3T.315777-001-MN.26A-06/2026
+A,Gallus gallus,Alaska,USA,002,MN.26A,2026-06-30,A/Feral Chicken/US-AK/3F72J.315777-002-MN.26A-06/2026
+A,gallus gallus domesticus,New York,USA,002,MN.26A,2026-06-30,A/Domestic Chicken/US-NY/3F72J.315777-002-MN.26A-06/2026
+A,Sus scrofa,,China,003,MN.26A,2026-07-25,A/Feral Pig/CN/53HGR.315777-003-MN.26A-07/2026
+A,Anas platyrhynchos,Ontario,Canada,125,MN.26A,2024-02-10,A/Mallard/CA-ON/DGP6.315777-125-MN.26A-02/2024

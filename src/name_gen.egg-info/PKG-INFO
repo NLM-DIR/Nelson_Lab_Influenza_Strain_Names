@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: name_gen
+Version: 0.1.0
+Summary: Generate standardized influenza strain names from metadata.
+Author-email: Andrew LaPointe <lapointear@nih.gov>, Martha Nelson <you@example.com>
+Project-URL: Repository, https://github.com/yourusername/name_gen
+Keywords: influenza,strain,naming,bioinformatics
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
