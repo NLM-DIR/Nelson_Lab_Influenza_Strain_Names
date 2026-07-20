@@ -119,21 +119,25 @@ def scientific_to_vernacular(scientific_name, language="eng", session=None,
     ranking), then falls back to the local VERNACULAR_FALLBACK map.
     Returns None if nothing resolves.
     """
-    sess = session or requests
 
     try:
-        usage_key = gbif_match_usage_key(scientific_name, session=sess)
-        if usage_key is not None:
-            name = gbif_vernacular_name(usage_key, language=language,
-                                        session=sess)
-            if name:
-                return name
-    except requests.RequestException:
-        # Network/HTTP failure — fall through to local map rather than raise.
+        return get_canon_name(scientific_name)
+    except KeyError:
         pass
 
     if use_fallback:
-        return "NONE FOUND"
+        sess = session or requests
+        try:
+            usage_key = gbif_match_usage_key(scientific_name, session=sess)
+            if usage_key is not None:
+                name = gbif_vernacular_name(usage_key, language=language,
+                                            session=sess)
+                if name:
+                    return name
+        except requests.RequestException:
+            # Network/HTTP failure — fall through to local map rather than raise.
+            pass
+
     return None
 
 
