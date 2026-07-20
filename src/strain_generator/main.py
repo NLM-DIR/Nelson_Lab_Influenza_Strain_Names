@@ -213,7 +213,7 @@ def run_single(args: argparse.Namespace) -> None:
     except ValueError:
         raise SystemExit(f"Error: --date must be in YYYY-MM-DD format, got: {args.date!r}")
 
-    strain_name = assemble_strain_name( 
+    strain_name = assemble_strain_name(
         virus_type=args.virus_type,
         host=host,
         location=args.location,

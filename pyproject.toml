@@ -29,7 +29,7 @@ strain-gen = "strain_generator.main:main"
 strain-read = "strain_generator.strain_reader:main"
 
 [project.urls]
-Repository = "https://github.com/yourusername/name_gen"
+Repository = "https://github.com/NLM-DIR/Nelson_Lab_Influenza_Strain_Names"
 
 [tool.setuptools.packages.find]
 where = ["src"]

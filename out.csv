@@ -1,6 +1,101 @@
 virus_type,host,location,country,sequence,lab_id,date,strain_name
-A,Homo sapiens,Virginia,USA,001,MN.26A,2026-06-30,A/US-VA/6MB3T.315777-001-MN.26A-06/2026
-A,Gallus gallus,Alaska,USA,002,MN.26A,2026-06-30,A/Feral Chicken/US-AK/3F72J.315777-002-MN.26A-06/2026
-A,gallus gallus domesticus,New York,USA,002,MN.26A,2026-06-30,A/Domestic Chicken/US-NY/3F72J.315777-002-MN.26A-06/2026
-A,Sus scrofa,,China,003,MN.26A,2026-07-25,A/Feral Pig/CN/53HGR.315777-003-MN.26A-07/2026
-A,Anas platyrhynchos,Ontario,Canada,125,MN.26A,2024-02-10,A/Mallard/CA-ON/DGP6.315777-125-MN.26A-02/2024
+A,Sus scrofa,Yunnan,China,544,MN.26A,2024-04-11,A/Wild Boar/CN/53HGR.1-544-MN.26A-04/2024
+A,Columba livia,Rio Grande do Sul,Brazil,003,MN.26A,2023-07-23,A/Rock Pigeon/BR-RS/XBFW.1-003-MN.26A-07/2023
+A,Columba livia,Sichuan,China,859,MN.26A,2023-10-02,A/Rock Pigeon/CN-SC/XBFW.1-859-MN.26A-10/2023
+A,Mustela putorius furo,São Paulo,Brazil,071,MN.26A,2023-01-10,A/Feral Ferret/BR-SP/5JSGR.1-071-MN.26A-01/2023
+A,Bos taurus,Rio Grande do Sul,Brazil,053,MN.26A,2024-01-10,A/Domestic Cattle/BR-RS/MLQ5.1-053-MN.26A-01/2024
+A,Phasianus colchicus,Alberta,Canada,205,MN.26A,2023-01-08,A/Ring-necked Pheasant/CA-AB/4FWMN.1-205-MN.26A-01/2023
+A,Sus scrofa,Georgia,USA,604,MN.26A,2024-07-26,A/Wild Boar/US-GA/53HGR.1-604-MN.26A-07/2024
+A,Falco peregrinus,Guangdong,China,980,MN.26A,2023-03-29,A/Peregrine Falcon/CN-GD/3DTGL.1-980-MN.26A-03/2023
+A,Gallus gallus domesticus,Yunnan,China,479,MN.26A,2026-04-14,A/Chicken/CN/3F72J.1-479-MN.26A-04/2026
+A,Columba livia,,Vietnam,043,MN.26A,2024-10-24,A/Rock Pigeon/VN/XBFW.1-043-MN.26A-10/2024
+A,Anas platyrhynchos,Hubei,China,791,MN.26A,2023-05-04,A/Wild Duck/CN/DGP6.1-791-MN.26A-05/2023
+A,Columba livia,Iowa,USA,333,MN.26A,2026-03-24,A/Rock Pigeon/US-IA/XBFW.1-333-MN.26A-03/2026
+A,Anas platyrhynchos,Western Cape,South Africa,179,MN.26A,2023-05-02,A/Wild Duck/ZA-WC/DGP6.1-179-MN.26A-05/2023
+A,Cygnus olor,Alaska,USA,809,MN.26A,2023-05-11,A/Mute Swan/US-AK/32ZQB.1-809-MN.26A-05/2023
+A,Homo sapiens,Minnesota,USA,804,MN.26A,2025-09-07,A/US-MN/6MB3T.1-804-MN.26A-09/2025
+A,Canis lupus familiaris,Brittany,France,548,MN.26A,2025-07-09,A/Domestic Dog/FR/5G6ZJ.1-548-MN.26A-07/2025
+A,Mustela putorius furo,New South Wales,Australia,937,MN.26A,2023-06-14,A/Feral Ferret/AU-NSW/5JSGR.1-937-MN.26A-06/2023
+A,Vulpes vulpes,Florida,USA,504,MN.26A,2024-05-11,A/Red Fox/US-FL/5BSG3.1-504-MN.26A-05/2024
+A,Phasianus colchicus,Ontario,Canada,194,MN.26A,2023-07-09,A/Ring-necked Pheasant/CA-ON/4FWMN.1-194-MN.26A-07/2023
+A,Bos taurus,Guangdong,China,768,MN.26A,2025-01-25,A/Domestic Cattle/CN-GD/MLQ5.1-768-MN.26A-01/2025
+A,Cygnus olor,Yunnan,China,739,MN.26A,2024-03-18,A/Mute Swan/CN/32ZQB.1-739-MN.26A-03/2024
+A,Meleagris gallopavo,,Vietnam,214,MN.26A,2025-01-19,A/Wild Turkey/VN/3ZDJV.1-214-MN.26A-01/2025
+A,Gallus gallus,Victoria,Australia,226,MN.26A,2024-02-14,A/Red Junglefowl/AU-VIC/3F72J.1-226-MN.26A-02/2024
+A,Cygnus olor,Rio Grande do Sul,Brazil,545,MN.26A,2025-02-09,A/Mute Swan/BR-RS/32ZQB.1-545-MN.26A-02/2025
+A,Panthera tigris,,Vietnam,379,MN.26A,2025-06-19,A/Tiger/VN/4CGXS.1-379-MN.26A-06/2025
+A,Panthera tigris,Washington,USA,828,MN.26A,2026-05-30,A/Tiger/US-WA/4CGXS.1-828-MN.26A-05/2026
+A,Corvus corax,Alaska,USA,223,MN.26A,2024-09-21,A/Common Raven/US-AK/YNHG.1-223-MN.26A-09/2024
+A,Canis lupus familiaris,Alaska,USA,299,MN.26A,2025-02-17,A/Domestic Dog/US-AK/5G6ZJ.1-299-MN.26A-02/2025
+A,Cygnus olor,Normandy,France,464,MN.26A,2024-02-18,A/Mute Swan/FR-NOR/32ZQB.1-464-MN.26A-02/2024
+A,Falco peregrinus,Normandy,France,371,MN.26A,2025-02-07,A/Peregrine Falcon/FR-NOR/3DTGL.1-371-MN.26A-02/2025
+A,Equus caballus,Rio Grande do Sul,Brazil,771,MN.26A,2024-05-09,A/Domestic Horse/BR-RS/7TKN2.1-771-MN.26A-05/2024
+A,Sus scrofa,,Vietnam,580,MN.26A,2023-10-23,A/Wild Boar/VN/53HGR.1-580-MN.26A-10/2023
+A,Vulpes vulpes,Tuscany,Italy,752,MN.26A,2025-12-13,A/Red Fox/IT-52/5BSG3.1-752-MN.26A-12/2025
+A,Gallus gallus domesticus,,Russia,721,MN.26A,2024-09-09,A/Chicken/RU/3F72J.1-721-MN.26A-09/2024
+A,Corvus corax,Virginia,USA,777,MN.26A,2024-11-16,A/Common Raven/US-VA/YNHG.1-777-MN.26A-11/2024
+A,Corvus corax,Tuscany,Italy,832,MN.26A,2023-08-15,A/Common Raven/IT-52/YNHG.1-832-MN.26A-08/2023
+A,Gallus gallus,New York,USA,150,MN.26A,2023-03-01,A/Red Junglefowl/US-NY/3F72J.1-150-MN.26A-03/2023
+A,Meleagris gallopavo,Florida,USA,259,MN.26A,2025-10-13,A/Wild Turkey/US-FL/3ZDJV.1-259-MN.26A-10/2025
+A,Gallus gallus domesticus,,Vietnam,999,MN.26A,2025-05-31,A/Chicken/VN/3F72J.1-999-MN.26A-05/2025
+A,Mustela putorius furo,British Columbia,Canada,898,MN.26A,2024-09-24,A/Feral Ferret/CA-BC/5JSGR.1-898-MN.26A-09/2024
+A,Vulpes vulpes,Minnesota,USA,796,MN.26A,2023-02-17,A/Red Fox/US-MN/5BSG3.1-796-MN.26A-02/2023
+A,Anas platyrhynchos,São Paulo,Brazil,821,MN.26A,2026-03-02,A/Wild Duck/BR-SP/DGP6.1-821-MN.26A-03/2026
+A,Panthera tigris,Florida,USA,455,MN.26A,2025-08-06,A/Tiger/US-FL/4CGXS.1-455-MN.26A-08/2025
+A,Anas platyrhynchos,Brittany,France,612,MN.26A,2025-09-26,A/Wild Duck/FR/DGP6.1-612-MN.26A-09/2025
+A,Panthera tigris,England,UK,840,MN.26A,2025-11-16,A/Tiger/GB-ENG/4CGXS.1-840-MN.26A-11/2025
+A,Felis catus,,Egypt,656,MN.26A,2026-02-17,A/Domestic Cat/EG/3DXV3.1-656-MN.26A-02/2026
+A,Larus argentatus,Virginia,USA,543,MN.26A,2024-11-12,A/European Herring Gull/US-VA/3SBPN.1-543-MN.26A-11/2024
+A,Canis lupus familiaris,Alberta,Canada,924,MN.26A,2023-05-07,A/Domestic Dog/CA-AB/5G6ZJ.1-924-MN.26A-05/2023
+A,Vulpes vulpes,Alaska,USA,570,MN.26A,2025-02-21,A/Red Fox/US-AK/5BSG3.1-570-MN.26A-02/2025
+A,Meleagris gallopavo,Minnesota,USA,300,MN.26A,2025-10-25,A/Wild Turkey/US-MN/3ZDJV.1-300-MN.26A-10/2025
+A,Felis catus,Rio Grande do Sul,Brazil,386,MN.26A,2023-04-03,A/Domestic Cat/BR-RS/3DXV3.1-386-MN.26A-04/2023
+A,Meleagris gallopavo,Manitoba,Canada,491,MN.26A,2025-07-25,A/Wild Turkey/CA-MB/3ZDJV.1-491-MN.26A-07/2025
+A,Falco peregrinus,Virginia,USA,157,MN.26A,2023-04-18,A/Peregrine Falcon/US-VA/3DTGL.1-157-MN.26A-04/2023
+A,Homo sapiens,Ontario,Canada,200,MN.26A,2023-08-03,A/CA-ON/6MB3T.1-200-MN.26A-08/2023
+A,Cygnus olor,Normandy,France,324,MN.26A,2026-06-17,A/Mute Swan/FR-NOR/32ZQB.1-324-MN.26A-06/2026
+A,Anas platyrhynchos,Osaka,Japan,878,MN.26A,2025-10-05,A/Wild Duck/JP-27/DGP6.1-878-MN.26A-10/2025
+A,Gallus gallus,Sichuan,China,047,MN.26A,2023-03-26,A/Red Junglefowl/CN-SC/3F72J.1-047-MN.26A-03/2023
+A,Gallus gallus domesticus,Sichuan,China,758,MN.26A,2024-06-10,A/Chicken/CN-SC/3F72J.1-758-MN.26A-06/2024
+A,Phasianus colchicus,Gauteng,South Africa,090,MN.26A,2023-10-11,A/Ring-necked Pheasant/ZA-GP/4FWMN.1-090-MN.26A-10/2023
+A,Larus argentatus,Iowa,USA,682,MN.26A,2026-04-23,A/European Herring Gull/US-IA/3SBPN.1-682-MN.26A-04/2026
+A,Vulpes vulpes,Tuscany,Italy,714,MN.26A,2025-03-13,A/Red Fox/IT-52/5BSG3.1-714-MN.26A-03/2025
+A,Panthera tigris,Jalisco,Mexico,031,MN.26A,2025-05-01,A/Tiger/MX-JAL/4CGXS.1-031-MN.26A-05/2025
+A,Falco peregrinus,Georgia,USA,202,MN.26A,2023-02-13,A/Peregrine Falcon/US-GA/3DTGL.1-202-MN.26A-02/2023
+A,Meleagris gallopavo,Sichuan,China,086,MN.26A,2025-01-06,A/Wild Turkey/CN-SC/3ZDJV.1-086-MN.26A-01/2025
+A,Gallus gallus domesticus,São Paulo,Brazil,703,MN.26A,2025-04-04,A/Chicken/BR-SP/3F72J.1-703-MN.26A-04/2025
+A,Anas platyrhynchos,Brittany,France,050,MN.26A,2025-12-09,A/Wild Duck/FR/DGP6.1-050-MN.26A-12/2025
+A,Anas platyrhynchos,,Egypt,944,MN.26A,2023-07-08,A/Wild Duck/EG/DGP6.1-944-MN.26A-07/2023
+A,Felis catus,São Paulo,Brazil,250,MN.26A,2026-03-14,A/Domestic Cat/BR-SP/3DXV3.1-250-MN.26A-03/2026
+A,Sus scrofa,,Egypt,978,MN.26A,2026-02-06,A/Wild Boar/EG/53HGR.1-978-MN.26A-02/2026
+A,Homo sapiens,Jalisco,Mexico,733,MN.26A,2025-04-22,A/MX-JAL/6MB3T.1-733-MN.26A-04/2025
+A,Gallus gallus domesticus,England,UK,882,MN.26A,2026-03-25,A/Chicken/GB-ENG/3F72J.1-882-MN.26A-03/2026
+A,Gallus gallus domesticus,Tuscany,Italy,174,MN.26A,2025-07-16,A/Chicken/IT-52/3F72J.1-174-MN.26A-07/2025
+A,Gallus gallus domesticus,Sichuan,China,289,MN.26A,2023-04-02,A/Chicken/CN-SC/3F72J.1-289-MN.26A-04/2023
+A,Cygnus olor,Alberta,Canada,915,MN.26A,2026-02-04,A/Mute Swan/CA-AB/32ZQB.1-915-MN.26A-02/2026
+A,Gallus gallus domesticus,Brittany,France,467,MN.26A,2023-12-31,A/Chicken/FR/3F72J.1-467-MN.26A-12/2023
+A,Cygnus olor,Normandy,France,925,MN.26A,2026-04-18,A/Mute Swan/FR-NOR/32ZQB.1-925-MN.26A-04/2026
+A,Gallus gallus,Guangdong,China,008,MN.26A,2025-03-24,A/Red Junglefowl/CN-GD/3F72J.1-008-MN.26A-03/2025
+A,Bos taurus,,Russia,693,MN.26A,2025-07-15,A/Domestic Cattle/RU/MLQ5.1-693-MN.26A-07/2025
+A,Falco peregrinus,Queensland,Australia,810,MN.26A,2023-05-03,A/Peregrine Falcon/AU-QLD/3DTGL.1-810-MN.26A-05/2023
+A,Vulpes vulpes,Hubei,China,879,MN.26A,2024-05-22,A/Red Fox/CN/5BSG3.1-879-MN.26A-05/2024
+A,Meleagris gallopavo,Tuscany,Italy,488,MN.26A,2024-02-17,A/Wild Turkey/IT-52/3ZDJV.1-488-MN.26A-02/2024
+A,Falco peregrinus,Tuscany,Italy,894,MN.26A,2023-08-05,A/Peregrine Falcon/IT-52/3DTGL.1-894-MN.26A-08/2023
+A,Sus scrofa,Scotland,UK,342,MN.26A,2023-12-14,A/Wild Boar/GB-SCT/53HGR.1-342-MN.26A-12/2023
+A,Corvus corax,British Columbia,Canada,718,MN.26A,2025-07-04,A/Common Raven/CA-BC/YNHG.1-718-MN.26A-07/2025
+A,Canis lupus familiaris,Quebec,Canada,794,MN.26A,2024-01-03,A/Domestic Dog/CA-QC/5G6ZJ.1-794-MN.26A-01/2024
+A,Equus caballus,Alberta,Canada,902,MN.26A,2025-12-26,A/Domestic Horse/CA-AB/7TKN2.1-902-MN.26A-12/2025
+A,Equus caballus,Lombardy,Italy,891,MN.26A,2024-07-11,A/Domestic Horse/IT-25/7TKN2.1-891-MN.26A-07/2024
+A,Columba livia,Victoria,Australia,683,MN.26A,2023-12-14,A/Rock Pigeon/AU-VIC/XBFW.1-683-MN.26A-12/2023
+A,Larus argentatus,Florida,USA,009,MN.26A,2025-07-31,A/European Herring Gull/US-FL/3SBPN.1-009-MN.26A-07/2025
+A,Equus caballus,Washington,USA,740,MN.26A,2023-07-15,A/Domestic Horse/US-WA/7TKN2.1-740-MN.26A-07/2023
+A,Anser anser,Western Cape,South Africa,626,MN.26A,2024-06-04,A/Greylag Goose/ZA-WC/679X7.1-626-MN.26A-06/2024
+A,Panthera tigris,Quebec,Canada,849,MN.26A,2024-12-23,A/Tiger/CA-QC/4CGXS.1-849-MN.26A-12/2024
+A,Vulpes vulpes,Western Cape,South Africa,889,MN.26A,2025-10-04,A/Red Fox/ZA-WC/5BSG3.1-889-MN.26A-10/2025
+A,Anser anser,Hubei,China,301,MN.26A,2026-04-25,A/Greylag Goose/CN/679X7.1-301-MN.26A-04/2026
+A,Gallus gallus domesticus,British Columbia,Canada,475,MN.26A,2024-11-21,A/Chicken/CA-BC/3F72J.1-475-MN.26A-11/2024
+A,Sus scrofa,Saxony,Germany,444,MN.26A,2023-04-11,A/Wild Boar/DE/53HGR.1-444-MN.26A-04/2023
+A,Bos taurus,New York,USA,219,MN.26A,2024-01-05,A/Domestic Cattle/US-NY/MLQ5.1-219-MN.26A-01/2024
+A,Anas platyrhynchos,Minnesota,USA,576,MN.26A,2023-02-04,A/Wild Duck/US-MN/DGP6.1-576-MN.26A-02/2023
+A,Columba livia,Texas,USA,278,MN.26A,2023-02-18,A/Rock Pigeon/US-TX/XBFW.1-278-MN.26A-02/2023
+A,Corvus corax,Rio Grande do Sul,Brazil,466,MN.26A,2026-04-27,A/Common Raven/BR-RS/YNHG.1-466-MN.26A-04/2026
