@@ -1,0 +1,3 @@
+[console_scripts]
+strain-gen = strain_generator.main:main
+strain-read = strain_generator.strain_reader:main

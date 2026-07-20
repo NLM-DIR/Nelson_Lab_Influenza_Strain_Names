@@ -13,9 +13,9 @@ import requests
 import sys
 from datetime import datetime
 
-from name_gen.csv_handler import process_csv, REQUIRED_COLUMNS
-from name_gen.tools import host_tools, location_tools, phone_code
-from name_gen import package_config
+from strain_generator.csv_handler import process_csv, REQUIRED_COLUMNS
+from strain_generator.tools import host_tools, location_tools
+from strain_generator import package_config
 
 
 def normalize_location(location: str, country: str) -> str:
@@ -41,20 +41,12 @@ def normalize_virus_type(virus_type: str) -> str:
     # raise NotImplementedError(f"Virus type normalization not yet implemented for: {virus_type!r}")
 
 
-def make_strain_id_0(country, subdivision_string, month, year, sequence, lab_id) -> str:
-    country_code = phone_code.get_country_code(country)
-    area_code = location_tools.get_local_code(subdivision_string)
+def make_strain_id(host, month, sequence, lab_id) -> str:
+    # release = host_tools.resolve_latest_dataset_key()
+    # taxon_result = host_tools.match_species(host, release["dataset_key"])
+    taxon_result = host_tools.match_species(host, package_config["COL_dataset_key"])
 
-    isolate_id = f"{country_code}-{area_code}-{month}-{sequence}_{lab_id}"
-
-    return isolate_id
-
-
-def make_strain_id_1(host, month, sequence, lab_id) -> str:
-    release = host_tools.resolve_latest_dataset_key()
-    taxon_result = host_tools.match_species(host, release["dataset_key"])
-
-    isolate_id = f"{taxon_result["usage_id"]}.{release["dataset_key"]}-{sequence}-{lab_id}-{month}"
+    isolate_id = f"{taxon_result['usage_id']}.{package_config['COL_version']}-{sequence}-{lab_id}-{month}"
 
     return isolate_id
 
@@ -84,33 +76,24 @@ def assemble_strain_name(
 
     Returns:
         Formatted strain name string, e.g.:
-        "A/Duck/New York/1-212-03-042_NYSDOH/2025"
+        "A/Chicken/US-VA/3F72J.1-15-MN.26A-02/2026"
     """
-
-    # FORMAT 0:
-    # [Type]/[Vernacular Host]/[Common Location]/[Phone CC]-[Local Code]-[Month]-[Lab Identifier]/[Year]
-
-    # FORMAT 1:
-    # [Type]/[Vernacular Host]/[ISO Subdivision]/[Taxon ID]-[Lab Identifier]-[Month]/[Year]
 
     norm_type = normalize_virus_type(virus_type)
     norm_host = None
     with requests.Session() as s:
         norm_host = host_tools.scientific_to_vernacular(host, session=s)
-    common_name, subdivision_string = normalize_location(location, country)
+    _, subdivision_string = normalize_location(location, country)
     month = f"{collection_date.month:02d}"
     year = str(collection_date.year)
 
     match package_config["format"]:
-        case 1:
-            strain_id = make_strain_id_1(host, month, sequence, lab_id)
-            strain_location = subdivision_string
         case _:
-            strain_id = make_strain_id_0(country, subdivision_string, month, year, sequence, lab_id)
-            strain_location = common_name
+            strain_id = make_strain_id(host, month, sequence, lab_id)
+            strain_location = subdivision_string
 
     # Build the slash-delimited components; drop host segment if human
-    if norm_host.lower() == "human" or not norm_host:
+    if not norm_host or norm_host.lower() == "human":
         components = [norm_type, strain_location, strain_id, year]
     else:
         components = [norm_type, norm_host, strain_location, strain_id, year]

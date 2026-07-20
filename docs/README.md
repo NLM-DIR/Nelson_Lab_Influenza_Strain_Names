@@ -35,5 +35,5 @@ strain-gen single --virus-type "A" --host "Gallus gallus" --location "Virginia" 
 ### Decoding Names
 
 ```bash
-strain-read 'A/Domestic Chicken/US-NY/3F72J.1-002_NEL26-06/2026'
+strain-read 'A/Domestic Chicken/US-NY/3F72J.1-002_MN_26A-06/2026'
 ```

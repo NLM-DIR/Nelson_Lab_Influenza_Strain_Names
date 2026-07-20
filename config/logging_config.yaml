@@ -1,6 +1,6 @@
 version: 1 # Do not change
 disable_existing_loggers: false
-logger_name: name_gen
+logger_name: strain_generator
 
 formatters:
   json_formatter:
@@ -30,7 +30,7 @@ handlers:
     stream: ext://sys.stdout
 
 loggers:
-  name_gen:
+  strain_generator:
     level: WARNING
     handlers: [file, console]
     propagate: false

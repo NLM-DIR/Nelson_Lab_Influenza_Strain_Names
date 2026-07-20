@@ -1,7 +1,7 @@
 import pycountry
 
-from name_gen import logger
-from name_gen.tools import utils
+from strain_generator import logger
+from strain_generator.tools import utils
 import unicodedata
 # import difflib
 from rapidfuzz import process, fuzz

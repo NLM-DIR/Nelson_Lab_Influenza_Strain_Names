@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "name_gen"
+name = "strain_generator"
 version = "0.1.0"
 description = "Generate standardized influenza strain names from metadata."
 readme = "README.md"
@@ -25,8 +25,8 @@ dependencies = []
 # dev = ["pytest>=7.0"]
 
 [project.scripts]
-strain-gen = "name_gen.main:main"
-strain-read = "name_gen.strain_reader:main"
+strain-gen = "strain_generator.main:main"
+strain-read = "strain_generator.strain_reader:main"
 
 [project.urls]
 Repository = "https://github.com/yourusername/name_gen"

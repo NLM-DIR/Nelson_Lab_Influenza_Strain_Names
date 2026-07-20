@@ -1,3 +1,0 @@
-[console_scripts]
-strain-gen = name_gen.main:main
-strain-read = name_gen.strain_reader:main
