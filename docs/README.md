@@ -4,7 +4,7 @@
 
 The purpose of this tool is to establish a standard for influenza strain names which is readable, concise, and data-rich.
 
-The names this tool generates encodes isolate metadata and is completely reversible so that a samples context will be preserved. Each strain name contains: host name, host taxonomic record, location (country and subdivision), collection month, collection year, and a unique code for the original lab.
+The names this tool generates encode isolate metadata and is completely reversible so that a samples context will be preserved. Each strain name contains: host name, host taxonomic record, location (country and subdivision), collection month, collection year, and a unique code for the original lab.
 
 [Type]/[Vernacular Host]/[ISO 3166 Location]/[Catalogue of Life Taxonomy ID]-[Lab Identifier]-[Month]/[Year]
 
