@@ -1,14 +1,11 @@
 import json
-from pathlib import Path
 from functools import lru_cache
 import requests
+from importlib.resources import files
 
 
 CLB_BASE = "https://api.checklistbank.org"
 GBIF_BASE = "https://api.gbif.org/v1"
-
-CWD = Path(__file__).parent
-HOST_JSON = str(CWD.parent / "data" / "host_name.json")
 
 
 def normalize_host(host_string: str) -> str:
@@ -19,7 +16,8 @@ def normalize_host(host_string: str) -> str:
 
 @lru_cache(maxsize=1)
 def _load_host_dict() -> dict:
-    with open(HOST_JSON, "r") as f:
+    host_json = files("strain_generator.data").joinpath("host_name.json")
+    with open(host_json, "r") as f:
         return json.load(f)
 
 

@@ -19,10 +19,12 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
-dependencies = []
 
-[project.optional-dependencies]
-# dev = ["pytest>=7.0"]
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.package-data]
+strain_generator = ["data/*.json"]
 
 [project.scripts]
 strain-gen = "strain_generator.main:main"
