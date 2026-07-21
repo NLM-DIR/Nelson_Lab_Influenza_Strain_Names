@@ -16,7 +16,6 @@ To use this tool first install it as a package and install the requirements. We 
 
 ```bash
 pip install .
-pip install -r requirements.txt
 ```
 
 ### Generating Names
