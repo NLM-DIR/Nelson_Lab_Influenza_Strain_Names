@@ -75,7 +75,7 @@ def decode_strain_id(strain_id, session=None):
     """
     # Split into exactly 3 sections. The lab identifier may itself contain
     # additional characters, so limit the split.
-    taxonomy_code, lab_identifier, month = strain_id.split("-", 2)
+    taxonomy_code, sample_id, lab_identifier, month = strain_id.split("-", 3)
 
     usage_id, dataset_key = taxonomy_code.split(".", 1)
     dataset_key = COL_Version.get(int(dataset_key))
@@ -88,7 +88,7 @@ def decode_strain_id(strain_id, session=None):
         "col_usage_id": usage_id,
         "scientific_name": scientific_name,
         "month": month,
-        "lab_identifier": lab_identifier,
+        "lab_identifier": f"{sample_id}-{lab_identifier}",
     }
 
 
