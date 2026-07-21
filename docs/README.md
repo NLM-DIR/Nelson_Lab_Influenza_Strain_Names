@@ -12,7 +12,7 @@ The names this tool generates encode isolate metadata and are completely reversi
 
 ### Setup
 
-To use this tool first install it as a package and install the requirements. We recommend you use a [virtual environment](https://www.w3schools.com/python/python_virtualenv.asp).
+To use this tool first install it as a package and install the requirements. We strongly recommend you use a [virtual environment](https://www.w3schools.com/python/python_virtualenv.asp).
 
 ```bash
 pip install .
