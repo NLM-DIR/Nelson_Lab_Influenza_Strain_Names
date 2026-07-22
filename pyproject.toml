@@ -37,7 +37,7 @@ dependencies = [
 ]
 
 [tool.setuptools.package-data]
-strain_generator = ["data/*.json"]
+strain_generator = ["data/*.json", "config/*.yaml"]
 
 [project.scripts]
 strain-gen = "strain_generator.main:main"

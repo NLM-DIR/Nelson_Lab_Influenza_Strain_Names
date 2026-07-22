@@ -7,9 +7,10 @@ src/strain_generator.egg-info/PKG-INFO
 src/strain_generator.egg-info/SOURCES.txt
 src/strain_generator.egg-info/dependency_links.txt
 src/strain_generator.egg-info/entry_points.txt
+src/strain_generator.egg-info/requires.txt
 src/strain_generator.egg-info/top_level.txt
+src/strain_generator/data/host_name.json
 src/strain_generator/tools/host_tools.py
 src/strain_generator/tools/location_tools.py
-src/strain_generator/tools/phone_code.py
 src/strain_generator/tools/utils.py
-src/strain_generator/utils/normalize.py
+tests/test_strain_generator.py

@@ -1,0 +1,14 @@
+biopython==1.87
+certifi==2026.6.17
+charset-normalizer==3.4.9
+colorama==0.4.6
+idna==3.18
+numpy==2.5.1
+phonenumbers==9.0.33
+pycountry==26.2.16
+python-json-logger==4.1.0
+PyYAML==6.0.3
+RapidFuzz==3.14.5
+requests==2.34.2
+tqdm==4.68.4
+urllib3==2.7.0
