@@ -1,20 +1,17 @@
-import logging.config
+import logging
 import yaml
-from pathlib import Path
 from importlib.resources import files
 
-logger_config_file = files("strain_generator.config").joinpath("logging_config.yaml")
+# still load package config from YAML
 package_config_file = files("strain_generator.config").joinpath("package.yaml")
-
-with open(logger_config_file, "r") as log_f, \
-     open(package_config_file, "r") as package_f:
-    logger_config = yaml.safe_load(log_f.read())
+with open(package_config_file, "r") as package_f:
     package_config = yaml.safe_load(package_f)
 
-# ensure the log file's directory exists before configuring handlers
-log_file = logger_config["handlers"]["file"]["filename"]
-Path(log_file).parent.mkdir(parents=True, exist_ok=True)
-
-logging.config.dictConfig(logger_config)
+# override logging: send everything to stdout, no file handler
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 logger = logging.getLogger(__name__)
