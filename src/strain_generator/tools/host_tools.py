@@ -42,7 +42,8 @@ def get_canon_name(host_string: str) -> str:
 def gbif_match_usage_key(scientific_name, session=None):
     """Match a scientific name to a GBIF backbone usage key.
 
-    Returns the usageKey, or None if there's no confident match.
+    Returns the usageKey, or None if GBIF reports no match. Matching is
+    non-strict, so FUZZY matches are accepted.
     """
     sess = session or requests
     resp = sess.get(
@@ -113,9 +114,9 @@ def scientific_to_vernacular(scientific_name, language="eng", session=None,
                              use_fallback=True):
     """Resolve a scientific name to its best-matching vernacular name.
 
-    Tries GBIF (backbone match -> vernacular lookup with preferred-flag
-    ranking), then falls back to the local VERNACULAR_FALLBACK map.
-    Returns None if nothing resolves.
+    Consults the local host_name.json table first. If that misses and
+    use_fallback is set, falls back to GBIF (backbone match -> vernacular
+    lookup with preferred-flag ranking). Returns None if nothing resolves.
     """
 
     try:

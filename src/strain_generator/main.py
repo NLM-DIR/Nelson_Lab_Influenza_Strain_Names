@@ -1,20 +1,27 @@
 """
-flu_strain_namer: Generates standardized influenza strain names.
+strain_generator.main: Generates standardized influenza strain names.
 
 Strain name format:
-    <Virus Type>/<Host Species>/<Location>/<ID>/<Year>
+    <Virus Type>/<Vernacular Host>/<Location>/<ID>/<Year>
+
+The host segment is omitted for human samples.
 
 ID format:
-    [Country Code]-[Area Code]-[Month]-[Sequence]_[Lab Identifier]
+    [COL Usage ID].[COL Version]-[Sequence]-[Lab Identifier][-Suffix]
+
+The suffix is optional and is one of "v<N>" (isolate version), "L" (lab
+passage strain), or "v<N>.L" (both).
 """
 
 import argparse
 import requests
 import sys
 from datetime import datetime
+from typing import Optional
 
 from strain_generator.csv_handler import process_csv, REQUIRED_COLUMNS
 from strain_generator.tools import host_tools, location_tools
+from strain_generator.tools.utils import HUMAN_SCIENTIFIC_NAME
 from strain_generator import package_config
 
 
@@ -22,11 +29,12 @@ def normalize_location(location: str, country: str) -> str:
     """Normalize a location to its conventional strain-name form.
 
     Args:
-        location: City, state, or region.
+        location: ISO 3166 subdivision name (state, province, or region).
         country:  Country for context.
 
     Returns:
-        Normalized location string (e.g. "NewYork", "HongKong").
+        Tuple of (country display name, subdivision code), e.g.
+        ("United States", "US-VA").
     """
     norm_country, subdivision_code = location_tools.get_country_and_subdivision(country, location)
 
@@ -35,18 +43,67 @@ def normalize_location(location: str, country: str) -> str:
 
 
 def normalize_virus_type(virus_type: str) -> str:
-    """TODO: Validate and normalize the influenza virus type.
+    """Return the influenza virus type unchanged.
+
+    TODO: Validate and normalize the virus type.
     """
     return virus_type
     # raise NotImplementedError(f"Virus type normalization not yet implemented for: {virus_type!r}")
 
 
-def make_strain_id(host, month, sequence, lab_id) -> str:
+def make_isolate_suffix(
+    isolate_version: Optional[int] = None,
+    lab_passage: bool = False,
+) -> str:
+    """Build the optional trailing segment of the strain ID.
+
+    Args:
+        isolate_version: Isolate version number, or None if unversioned.
+        lab_passage:     Whether this is a lab passage strain.
+
+    Returns:
+        "v2", "L", "v2.L", or "" when neither input is given.
+    """
+    parts = []
+    if isolate_version is not None:
+        parts.append(f"v{isolate_version}")
+    if lab_passage:
+        parts.append("L")
+
+    return ".".join(parts)
+
+
+def make_strain_id(
+    host,
+    sequence,
+    lab_id,
+    isolate_version: Optional[int] = None,
+    lab_passage: bool = False,
+) -> str:
+    """Build the ID segment of a strain name.
+
+    Resolves the host against the pinned COL release, then appends the lab
+    fields and the optional suffix.
+
+    Returns:
+        e.g. "3F72J.1-002-MN.26A", or "3F72J.1-002-MN.26A-v2.L" when both
+        optional inputs are supplied.
+    """
     # release = host_tools.resolve_latest_dataset_key()
     # taxon_result = host_tools.match_species(host, release["dataset_key"])
     taxon_result = host_tools.match_species(host, package_config["COL_dataset_key"])
+    if not taxon_result:
+        raise ValueError(
+            f"could not resolve host {host!r} to a taxon in COL dataset "
+            f"{package_config['COL_dataset_key']}; check the spelling of the "
+            f"scientific name"
+        )
 
-    isolate_id = f"{taxon_result['usage_id']}.{package_config['COL_version']}-{sequence}-{lab_id}-{month}"
+    isolate_id = f"{taxon_result['usage_id']}.{package_config['COL_version']}-{sequence}-{lab_id}"
+
+    suffix = make_isolate_suffix(isolate_version, lab_passage)
+    if suffix:
+        isolate_id = f"{isolate_id}-{suffix}"
 
     return isolate_id
 
@@ -62,21 +119,29 @@ def assemble_strain_name(
     sequence: str,
     lab_id: str,
     collection_date: datetime,
+    isolate_version: Optional[int] = None,
+    lab_passage: bool = False,
 ) -> str:
     """Assemble a standardized influenza strain name.
 
     Args:
         virus_type:       Influenza type/subtype (e.g. "H1N1", "H3N2", "B").
-        host:             Host species (e.g. "Human", "Avian", "Swine").
-        location:         Collection city/region.
+        host:             Host scientific name (e.g. "Gallus gallus domesticus").
+        location:         Collection subdivision (state, province, or region).
         country:          Collection country (name or ISO code).
         sequence:         Lab sequence number for this isolate.
-        lab_id:           Laboratory identifier suffix.
-        collection_date:  Date the sample was collected.
+        lab_id:           Laboratory identifier.
+        collection_date:  Date the sample was collected. Only the year is
+                          recorded in the name.
+        isolate_version:  Optional isolate version number, encoded as "v<N>".
+        lab_passage:      Whether this is a lab passage strain, encoded as "L".
 
     Returns:
         Formatted strain name string, e.g.:
-        "A/Chicken/US-VA/3F72J.1-15-MN.26A-02/2026"
+        "A/Chicken/US-VA/3F72J.1-15-MN.26A/2026"
+
+        The host segment is dropped when the host resolves to "Human" or
+        cannot be resolved to a vernacular name.
     """
 
     norm_type = normalize_virus_type(virus_type)
@@ -84,12 +149,13 @@ def assemble_strain_name(
     with requests.Session() as s:
         norm_host = host_tools.scientific_to_vernacular(host, session=s)
     _, subdivision_string = normalize_location(location, country)
-    month = f"{collection_date.month:02d}"
     year = str(collection_date.year)
 
     match package_config["format"]:
         case _:
-            strain_id = make_strain_id(host, month, sequence, lab_id)
+            strain_id = make_strain_id(
+                host, sequence, lab_id, isolate_version, lab_passage
+            )
             strain_location = subdivision_string
 
     # Build the slash-delimited components; drop host segment if human
@@ -169,7 +235,19 @@ def parse_args() -> argparse.Namespace:
         "--date", "-d",
         required=True,
         metavar="YYYY-MM-DD",
-        help="Sample collection date in YYYY-MM-DD format.",
+        help="Sample collection date in YYYY-MM-DD format. Only the year is "
+             "recorded in the name.",
+    )
+    single.add_argument(
+        "--isolate-version", "-V",
+        type=int,
+        metavar="N",
+        help="Optional isolate version number, appended to the ID as 'v<N>'.",
+    )
+    single.add_argument(
+        "--lab-passage", "-L",
+        action="store_true",
+        help="Mark this as a lab passage strain, appended to the ID as 'L'.",
     )
 
     # ----- file mode -------------------------------------------------------
@@ -206,22 +284,49 @@ def run_single(args: argparse.Namespace) -> None:
     if not args.human and not args.host:
         raise SystemExit("Error: --host is required unless --human is given.")
 
-    host = "Human" if args.human else args.host
+    host = HUMAN_SCIENTIFIC_NAME if args.human else args.host
+
+    if args.isolate_version is not None and args.isolate_version < 1:
+        raise SystemExit(
+            f"Error: --isolate-version must be a positive integer, got: "
+            f"{args.isolate_version}"
+        )
 
     try:
         collection_date = datetime.strptime(args.date, "%Y-%m-%d")
     except ValueError:
         raise SystemExit(f"Error: --date must be in YYYY-MM-DD format, got: {args.date!r}")
 
-    strain_name = assemble_strain_name(
-        virus_type=args.virus_type,
-        host=host,
-        location=args.location,
-        country=args.country,
-        sequence=args.sequence,
-        lab_id=args.lab_id,
-        collection_date=collection_date,
-    )
+    try:
+        strain_name = assemble_strain_name(
+            virus_type=args.virus_type,
+            host=host,
+            location=args.location,
+            country=args.country,
+            sequence=args.sequence,
+            lab_id=args.lab_id,
+            collection_date=collection_date,
+            isolate_version=args.isolate_version,
+            lab_passage=args.lab_passage,
+        )
+    except ValueError as exc:
+        # Raised by make_strain_id when the host has no match in the pinned
+        # COL release.
+        raise SystemExit(f"Error: {exc}")
+    except LookupError as exc:
+        # pycountry.search_fuzzy raises a bare LookupError whose message is
+        # just the query, so compose a useful one. KeyError and IndexError are
+        # LookupError subclasses but signal a bug rather than bad input, so
+        # let those propagate.
+        if isinstance(exc, (KeyError, IndexError)):
+            raise
+        raise SystemExit(
+            f"Error: could not match country {args.country!r} to an ISO 3166 entry."
+        )
+    except requests.RequestException as exc:
+        raise SystemExit(
+            f"Error: could not reach an external lookup service: {exc}"
+        )
 
     print(strain_name)
 

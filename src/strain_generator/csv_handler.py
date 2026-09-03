@@ -4,6 +4,9 @@ csv_processor: Batch generation of influenza strain names from a CSV file.
 Reads an input CSV containing sample metadata, validates that the required
 columns are present, generates a strain name for each row, and writes an
 updated CSV with a new strain-name column.
+
+The optional "isolate_version" and "lab_passage" columns feed the trailing
+suffix of the strain ID; both may be omitted entirely.
 """
 
 import csv
@@ -11,6 +14,8 @@ from datetime import datetime
 from typing import Callable
 
 from tqdm import tqdm
+
+from strain_generator.tools.utils import HUMAN_SCIENTIFIC_NAME
 
 # Columns that must always be present in the input CSV header.
 REQUIRED_COLUMNS = [
@@ -25,6 +30,9 @@ REQUIRED_COLUMNS = [
 # Either "host" or "human" must be present to determine the host species.
 HOST_COLUMNS = ["host", "human"]
 
+# Recognized but not required. An absent or empty value means "not set".
+OPTIONAL_COLUMNS = ["isolate_version", "lab_passage"]
+
 # Values in a "human" column that are treated as truthy.
 TRUE_VALUES = {"1", "true", "t", "yes", "y"}
 
@@ -32,7 +40,8 @@ DATE_FORMAT = "%Y-%m-%d"
 
 
 def _validate_columns(fieldnames: list[str]) -> None:
-    """Raise ValueError if any required column is missing from the header."""
+    """Raise ValueError if the header is absent, is missing a required column,
+    or has neither a 'host' nor a 'human' column."""
     if not fieldnames:
         raise ValueError("Input CSV has no header row.")
 
@@ -54,17 +63,38 @@ def _validate_columns(fieldnames: list[str]) -> None:
 def _resolve_host(row: dict) -> str:
     """Determine the host for a row, honoring an optional 'human' column.
 
-    A truthy 'human' value yields "Human". Otherwise the 'host' value is used,
-    which must be non-empty.
+    A truthy 'human' value yields the canonical human scientific name.
+    Otherwise the 'host' value is used, which must be non-empty.
     """
     human_flag = (row.get("human") or "").strip().lower()
     if human_flag in TRUE_VALUES:
-        return "Human"
+        return HUMAN_SCIENTIFIC_NAME
 
     host = (row.get("host") or "").strip()
     if not host:
         raise ValueError("'host' is required unless 'human' is set.")
     return host
+
+
+def _resolve_isolate_version(row: dict):
+    """Read the optional 'isolate_version' column.
+
+    Returns the version as an int, or None when the column is absent or empty.
+    """
+    raw = (row.get("isolate_version") or "").strip()
+    if not raw:
+        return None
+
+    if not raw.isdigit() or int(raw) < 1:
+        raise ValueError(
+            f"'isolate_version' must be a positive integer, got: {raw!r}"
+        )
+    return int(raw)
+
+
+def _resolve_lab_passage(row: dict) -> bool:
+    """Read the optional 'lab_passage' column as a boolean."""
+    return (row.get("lab_passage") or "").strip().lower() in TRUE_VALUES
 
 
 def _row_to_strain_name(
@@ -88,6 +118,8 @@ def _row_to_strain_name(
         sequence=(row.get("sequence") or "").strip(),
         lab_id=(row.get("lab_id") or "").strip(),
         collection_date=collection_date,
+        isolate_version=_resolve_isolate_version(row),
+        lab_passage=_resolve_lab_passage(row),
     )
 
 
@@ -114,7 +146,7 @@ def process_csv(
 
     Raises:
         FileNotFoundError: If input_path does not exist.
-        ValueError:        If the header is missing required columns.
+        ValueError:        If the header is absent or missing required columns.
     """
     errors: list[tuple[int, str]] = []
     with open(input_path, newline="", encoding="utf-8") as f:

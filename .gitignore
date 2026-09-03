@@ -300,3 +300,5 @@ marimo/\_lsp/
 # Streamlit
 
 .streamlit/secrets.toml
+CLAUDE.md
+src/strain_generator.egg-info/SOURCES.txt

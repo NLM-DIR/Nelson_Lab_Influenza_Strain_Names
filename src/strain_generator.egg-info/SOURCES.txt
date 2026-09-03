@@ -1,4 +1,5 @@
 pyproject.toml
+docs/README.md
 src/strain_generator/__init__.py
 src/strain_generator/csv_handler.py
 src/strain_generator/main.py
@@ -9,6 +10,8 @@ src/strain_generator.egg-info/dependency_links.txt
 src/strain_generator.egg-info/entry_points.txt
 src/strain_generator.egg-info/requires.txt
 src/strain_generator.egg-info/top_level.txt
+src/strain_generator/config/logging_config.yaml
+src/strain_generator/config/package.yaml
 src/strain_generator/data/host_name.json
 src/strain_generator/tools/host_tools.py
 src/strain_generator/tools/location_tools.py

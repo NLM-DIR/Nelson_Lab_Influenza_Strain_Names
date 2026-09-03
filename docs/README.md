@@ -4,9 +4,18 @@
 
 The purpose of this tool is to establish a standard for influenza strain names which is readable, concise, and data-rich.
 
-The names this tool generates encode isolate metadata and are completely reversible so that a samples context will be preserved. Each strain name contains: host name, host taxonomic record, location (country and subdivision), collection month, collection year, and a unique code for the original lab.
+The names this tool generates encode isolate metadata and are completely reversible so that a samples context will be preserved. Each strain name contains: host name, host taxonomic record, location (country and subdivision), collection year, a unique code for the original lab, and optionally an isolate version number and a lab passage marker.
 
-[Type]/[Vernacular Host]/[ISO 3166 Location]/[Catalogue of Life Taxonomy ID]-[Lab Identifier]-[Month]/[Year]
+[Type]/[Vernacular Host]/[ISO 3166 Location]/[Catalogue of Life Taxonomy ID]-[Sequence]-[Lab Identifier]-[Suffix]/[Year]
+
+The trailing suffix is optional. It is `v<N>` for a versioned isolate, `L` for a lab passage strain, or `v<N>.L` for both:
+
+```
+A/Chicken/US-VA/3F72J.1-01-MN.26A/2026        no version, not a passage strain
+A/Chicken/US-VA/3F72J.1-01-MN.26A-v2/2026     version 2
+A/Chicken/US-VA/3F72J.1-01-MN.26A-L/2026      lab passage strain
+A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026   version 2, lab passage strain
+```
 
 ## Usage
 
@@ -32,11 +41,19 @@ To generate a single name:
 strain-gen single --virus-type "A" --host "Gallus gallus domesticus" --location "Virginia" --country "United States" --sequence "01" --lab-id "MN.26A" --date "2026-02-28"
 ```
 
+To record an isolate version and/or a lab passage strain:
+
+```bash
+strain-gen single --virus-type "A" --host "Gallus gallus domesticus" --location "Virginia" --country "United States" --sequence "01" --lab-id "MN.26A" --date "2026-02-28" --isolate-version 2 --lab-passage
+```
+
 ### Decoding Names
 
 ```bash
-strain-read "A/Chicken/US-VA/3F72J.1-01-MN.26A-02/2026"
+strain-read "A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026"
 ```
+
+Names produced by earlier versions of this tool, whose ID ended in a two-digit collection month, are not decodable by the current reader.
 
 ### Inputs
 
@@ -58,4 +75,14 @@ strain-read "A/Chicken/US-VA/3F72J.1-01-MN.26A-02/2026"
    Unique identifier for a lab. This is comprised of a two letter initial of the labs PI and a 3 character alphanumeric code.
 
 7. --date
-   Date in YYYY-MM-DD format.
+   Date in YYYY-MM-DD format. Only the year is recorded in the name.
+
+8. --isolate-version (optional)
+   Positive integer version number for this isolate. Encoded as "v<N>". e.g. 2 -> "v2"
+
+9. --lab-passage (optional)
+   Flag marking this as a lab passage strain. Encoded as "L".
+
+In `file` mode these two are supplied as the optional CSV columns `isolate_version` and
+`lab_passage`; either or both may be omitted from the header. An empty `isolate_version` cell
+means "unversioned", and `lab_passage` accepts 1/true/t/yes/y.

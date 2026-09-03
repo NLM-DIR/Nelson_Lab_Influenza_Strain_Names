@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "strain_generator"
 version = "0.1.0"
 description = "Generate standardized influenza strain names from metadata."
-readme = "README.md"
+readme = "docs/README.md"
 requires-python = ">=3.9"
 authors = [
     { name = "Andrew LaPointe", email = "lapointear@nih.gov" },

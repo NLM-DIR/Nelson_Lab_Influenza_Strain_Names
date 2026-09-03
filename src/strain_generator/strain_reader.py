@@ -4,22 +4,39 @@ Decode influenza isolate strain names into structured metadata.
 Strain name format:
     <type>/<host>/<location>/<strain_id>/<year>
 
+The host segment is omitted for human samples, giving the 4-segment form:
+    <type>/<location>/<strain_id>/<year>
+
 Strain ID format:
-    <taxonomy_code>-<month>-<lab_identifier>
-    taxonomy_code = <col_dataset_key>.<col_usage_id>
+    <taxonomy_code>-<sequence>-<lab_identifier>[-<suffix>]
+    taxonomy_code = <col_usage_id>.<col_version>
+
+col_version is an index into COL_Version, which maps it to the concrete
+Catalogue of Life dataset key the usage ID was minted against.
+
+The suffix is optional and is one of "v<N>" (isolate version), "L" (lab
+passage strain), or "v<N>.L" (both).
 """
 
+import re
 import requests
 import pycountry
 import argparse
 import json
 import sys
 
+from strain_generator.tools import host_tools
+
 CLB_BASE_URL = "https://api.checklistbank.org"
 
 COL_Version = {
     1: 315448,
 }
+
+# Optional trailing segment of the strain ID: "v2", "L", or "v2.L".
+SUFFIX_RE = re.compile(
+    r"^(?:v(?P<version>\d+)(?:\.(?P<version_passage>L))?|(?P<passage>L))$"
+)
 
 
 def resolve_scientific_name(dataset_key, usage_id, session=None):
@@ -67,15 +84,52 @@ def decode_location(location):
     return {"country": country_name, "subdivision": subdivision_name}
 
 
+def decode_isolate_suffix(suffix):
+    """Split the optional trailing segment of a strain ID.
+
+    Returns a tuple of (isolate_version, lab_passage), where isolate_version
+    is an int or None.
+
+    Raises:
+        ValueError: If the suffix is not "v<N>", "L", or "v<N>.L".
+    """
+    match = SUFFIX_RE.match(suffix)
+    if not match:
+        raise ValueError(
+            f"unrecognized suffix {suffix!r}; expected 'v<N>', 'L', or 'v<N>.L'"
+        )
+
+    version = match.group("version")
+    lab_passage = bool(match.group("version_passage") or match.group("passage"))
+
+    return (int(version) if version else None), lab_passage
+
+
 def decode_strain_id(strain_id, session=None):
     """Break the strain ID into its components and resolve the taxonomy code.
 
-    strain_id = <taxonomy_code>-<lab_identifier>-<month>
-    taxonomy_code = <usage_id>.<dataset_key>
+    strain_id = <taxonomy_code>-<sequence>-<lab_identifier>[-<suffix>]
+    taxonomy_code = <usage_id>.<version>
+
+    The returned "lab_identifier" recombines the sequence and lab identifier
+    as "<sequence>-<lab_identifier>".
+
+    Raises:
+        ValueError: If the field count is wrong or the suffix is unrecognized.
+                    A lab identifier containing a hyphen will trip this.
     """
-    # Split into exactly 3 sections. The lab identifier may itself contain
-    # additional characters, so limit the split.
-    taxonomy_code, sample_id, lab_identifier, month = strain_id.split("-", 3)
+    parts = strain_id.split("-")
+    if len(parts) == 3:
+        taxonomy_code, sample_id, lab_identifier = parts
+        isolate_version, lab_passage = None, False
+    elif len(parts) == 4:
+        taxonomy_code, sample_id, lab_identifier, suffix = parts
+        isolate_version, lab_passage = decode_isolate_suffix(suffix)
+    else:
+        raise ValueError(
+            f"strain ID {strain_id!r} has {len(parts)} hyphen-separated "
+            f"field(s); expected 3 or 4"
+        )
 
     usage_id, dataset_key = taxonomy_code.split(".", 1)
     dataset_key = COL_Version.get(int(dataset_key))
@@ -87,16 +141,60 @@ def decode_strain_id(strain_id, session=None):
         "col_dataset_key": dataset_key,
         "col_usage_id": usage_id,
         "scientific_name": scientific_name,
-        "month": month,
         "lab_identifier": f"{sample_id}-{lab_identifier}",
+        "isolate_version": isolate_version,
+        "lab_passage": lab_passage,
     }
 
 
+def _vernacular_from_scientific(scientific_name):
+    """Recover a vernacular name for a name whose host segment was omitted.
+
+    Consults only the curated local host table, so this adds no network
+    calls. Returns None when the taxon has no curated vernacular name.
+    """
+    if not scientific_name:
+        return None
+    try:
+        return host_tools.get_canon_name(scientific_name)
+    except KeyError:
+        return None
+
+
 def decode_strain_name(strain_name, session=None):
-    """Decode a full influenza strain name into a metadata dictionary."""
-    virus_type, host, location, strain_id, year = strain_name.split("/")
+    """Decode a full influenza strain name into a metadata dictionary.
+
+    Accepts both name shapes produced by the generator:
+
+    * 5 segments — <type>/<host>/<location>/<strain_id>/<year>
+    * 4 segments — <type>/<location>/<strain_id>/<year>, produced when the
+      host segment was dropped because the host resolved to "Human" or could
+      not be resolved to a vernacular name at all.
+
+    For the 4-segment form the vernacular name is recovered from the taxon
+    that the COL usage ID resolves to, so a human sample round-trips back to
+    "Human". "host_segment_omitted" records which shape was decoded.
+
+    Raises:
+        ValueError: If the name has neither 4 nor 5 slash-separated segments,
+                    or if the strain ID is malformed.
+    """
+    parts = strain_name.split("/")
+    if len(parts) == 5:
+        virus_type, host, location, strain_id, year = parts
+        host_omitted = False
+    elif len(parts) == 4:
+        virus_type, location, strain_id, year = parts
+        host, host_omitted = None, True
+    else:
+        raise ValueError(
+            f"expected 4 or 5 slash-separated segments, got {len(parts)}"
+        )
 
     sid = decode_strain_id(strain_id, session=session)
+
+    if host_omitted:
+        host = _vernacular_from_scientific(sid["scientific_name"])
 
     return {
         "virus_type": virus_type,
@@ -105,13 +203,15 @@ def decode_strain_name(strain_name, session=None):
             "scientific_name": sid["scientific_name"],
             "col_dataset_key": sid["col_dataset_key"],
             "col_usage_id": sid["col_usage_id"],
+            "host_segment_omitted": host_omitted,
         },
         "location": decode_location(location),
         "date": {
-            "month": sid["month"],
             "year": year,
         },
         "lab_identifier": sid["lab_identifier"],
+        "isolate_version": sid["isolate_version"],
+        "lab_passage": sid["lab_passage"],
     }
 
 
@@ -128,7 +228,7 @@ def main(argv=None):
         metavar="STRAIN_NAME",
         help=(
             "The strain name to decode, e.g. "
-            "'A/Domestic Chicken/US-NY/3F72J.1-002_NEL26-06/2026'"
+            "'A/Domestic Chicken/US-NY/3F72J.1-002-NEL26-v2.L/2026'"
         ),
     )
     parser.add_argument(
