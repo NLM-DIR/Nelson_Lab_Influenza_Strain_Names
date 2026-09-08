@@ -2,9 +2,10 @@
 strain_generator.main: Generates standardized influenza strain names.
 
 Strain name format:
-    <Virus Type>/<Vernacular Host>/<Location>/<ID>/<Year>
+    <Virus Type>/<Vernacular Host>/<Location>/<ID>/<Year>[(<Subtype>)]
 
-The host segment is omitted for human samples.
+The host segment is omitted for human samples. The year carries an optional
+parenthesised subtype, e.g. "2026(H5N1)".
 
 ID format:
     [COL Usage ID].[COL Version]-[Sequence]-[Lab Identifier][-Suffix]
@@ -49,6 +50,40 @@ def normalize_virus_type(virus_type: str) -> str:
     """
     return virus_type
     # raise NotImplementedError(f"Virus type normalization not yet implemented for: {virus_type!r}")
+
+
+def normalize_subtype(subtype: Optional[str]) -> Optional[str]:
+    """Validate the influenza subtype and strip surrounding whitespace.
+
+    The subtype is recorded verbatim and is deliberately not checked against a
+    list of known subtypes, so novel reassortants and provisional designations
+    are accepted. Only characters that would make a name ambiguous to the
+    reader are rejected.
+
+    Args:
+        subtype: Subtype string such as "H5N1", or None when not recorded.
+
+    Returns:
+        The stripped subtype, or None when nothing was supplied.
+
+    Raises:
+        ValueError: If the subtype contains "/", "(", ")", or whitespace.
+    """
+    if subtype is None:
+        return None
+
+    norm = subtype.strip()
+    if not norm:
+        return None
+
+    bad = sorted({c for c in norm if c in "/()" or c.isspace()})
+    if bad:
+        raise ValueError(
+            f"subtype {subtype!r} contains disallowed character(s) "
+            f"{' '.join(repr(c) for c in bad)}; '/', '(', ')' and whitespace "
+            f"would make the strain name ambiguous to the reader"
+        )
+    return norm
 
 
 def make_isolate_suffix(
@@ -121,6 +156,7 @@ def assemble_strain_name(
     collection_date: datetime,
     isolate_version: Optional[int] = None,
     lab_passage: bool = False,
+    subtype: Optional[str] = None,
 ) -> str:
     """Assemble a standardized influenza strain name.
 
@@ -135,21 +171,31 @@ def assemble_strain_name(
                           recorded in the name.
         isolate_version:  Optional isolate version number, encoded as "v<N>".
         lab_passage:      Whether this is a lab passage strain, encoded as "L".
+        subtype:          Optional influenza subtype, appended to the year in
+                          parentheses, e.g. "2026(H5N1)". Omitted entirely when
+                          not supplied, which is the expected case for type B.
 
     Returns:
         Formatted strain name string, e.g.:
-        "A/Chicken/US-VA/3F72J.1-15-MN.26A/2026"
+        "A/Chicken/US-VA/3F72J.1-15-MN.26A/2026(H5N1)"
 
         The host segment is dropped when the host resolves to "Human" or
         cannot be resolved to a vernacular name.
+
+    Raises:
+        ValueError: If the subtype contains a character that would make the
+                    name ambiguous. See normalize_subtype.
     """
 
     norm_type = normalize_virus_type(virus_type)
+    norm_subtype = normalize_subtype(subtype)
     norm_host = None
     with requests.Session() as s:
         norm_host = host_tools.scientific_to_vernacular(host, session=s)
     _, subdivision_string = normalize_location(location, country)
     year = str(collection_date.year)
+    if norm_subtype:
+        year = f"{year}({norm_subtype})"
 
     match package_config["format"]:
         case _:
@@ -249,6 +295,13 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Mark this as a lab passage strain, appended to the ID as 'L'.",
     )
+    single.add_argument(
+        "--subtype", "-t",
+        metavar="SUBTYPE",
+        help="Optional influenza subtype, appended to the year in parentheses "
+             "e.g. 'H5N1' -> '/2026(H5N1)'. Recorded verbatim; may not contain "
+             "'/', '(', ')', or whitespace.",
+    )
 
     # ----- file mode -------------------------------------------------------
     file_mode = subparsers.add_parser(
@@ -308,10 +361,11 @@ def run_single(args: argparse.Namespace) -> None:
             collection_date=collection_date,
             isolate_version=args.isolate_version,
             lab_passage=args.lab_passage,
+            subtype=args.subtype,
         )
     except ValueError as exc:
-        # Raised by make_strain_id when the host has no match in the pinned
-        # COL release.
+        # Raised by normalize_subtype for a malformed subtype, and by
+        # make_strain_id when the host has no match in the pinned COL release.
         raise SystemExit(f"Error: {exc}")
     except LookupError as exc:
         # pycountry.search_fuzzy raises a bare LookupError whose message is

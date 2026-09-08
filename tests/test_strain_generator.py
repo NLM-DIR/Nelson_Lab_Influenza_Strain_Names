@@ -53,6 +53,36 @@ class TestNormalizeVirusType:
 
 
 # ---------------------------------------------------------------------------
+# normalize_subtype
+# ---------------------------------------------------------------------------
+class TestNormalizeSubtype:
+    @pytest.mark.parametrize("raw,expected", [
+        ("H5N1", "H5N1"),
+        (" H5N1 ", "H5N1"),      # surrounding whitespace is stripped
+        ("h5n1", "h5n1"),        # case is preserved, not normalized
+        ("H5N8", "H5N8"),
+        ("H1N1pdm09", "H1N1pdm09"),
+    ])
+    def test_accepted_verbatim(self, sm, raw, expected):
+        assert sm.normalize_subtype(raw) == expected
+
+    @pytest.mark.parametrize("raw", [None, "", "   "])
+    def test_absent_yields_none(self, sm, raw):
+        assert sm.normalize_subtype(raw) is None
+
+    @pytest.mark.parametrize("raw", [
+        "H5/N1",      # would add a spurious name segment
+        "H5N1)",      # would close the parenthesis early
+        "(H5N1",
+        "H5 N1",      # whitespace inside
+        "H5\tN1",
+    ])
+    def test_ambiguous_characters_rejected(self, sm, raw):
+        with pytest.raises(ValueError, match="disallowed character"):
+            sm.normalize_subtype(raw)
+
+
+# ---------------------------------------------------------------------------
 # normalize_location
 # ---------------------------------------------------------------------------
 class TestNormalizeLocation:
@@ -182,6 +212,79 @@ class TestAssembleStrainName:
                 collection_date=datetime(2026, 2, 15),
             )
         assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A/2026"
+
+    def test_subtype_appended_to_year(self, sm, fake_config):
+        cm, loc, cfg, sess = self._patched(
+            sm, fake_config, vernacular="Chicken", subdivision="US-VA"
+        )
+        with cm, loc, cfg, sess:
+            name = sm.assemble_strain_name(
+                virus_type="A",
+                host="Gallus gallus",
+                location="Richmond",
+                country="US",
+                sequence="02",
+                lab_id="MN.26A",
+                collection_date=datetime(2026, 2, 15),
+                subtype="H5N1",
+            )
+        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A/2026(H5N1)"
+
+    def test_subtype_omitted_leaves_bare_year(self, sm, fake_config):
+        """A name without a subtype must be unchanged by the new parameter."""
+        cm, loc, cfg, sess = self._patched(
+            sm, fake_config, vernacular="Chicken", subdivision="US-VA"
+        )
+        with cm, loc, cfg, sess:
+            name = sm.assemble_strain_name(
+                virus_type="B",
+                host="Gallus gallus",
+                location="Richmond",
+                country="US",
+                sequence="02",
+                lab_id="MN.26A",
+                collection_date=datetime(2026, 2, 15),
+                subtype=None,
+            )
+        assert name == "B/Chicken/US-VA/3F72J.1-02-MN.26A/2026"
+
+    def test_subtype_combines_with_isolate_suffix(self, sm, fake_config):
+        cm, loc, cfg, sess = self._patched(
+            sm, fake_config, vernacular="Chicken", subdivision="US-VA"
+        )
+        with cm, loc, cfg, sess:
+            name = sm.assemble_strain_name(
+                virus_type="A",
+                host="Gallus gallus",
+                location="Richmond",
+                country="US",
+                sequence="02",
+                lab_id="MN.26A",
+                collection_date=datetime(2026, 2, 15),
+                isolate_version=2,
+                lab_passage=True,
+                subtype="H5N1",
+            )
+        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A-v2.L/2026(H5N1)"
+
+    def test_bad_subtype_rejected_before_any_lookup(self, sm, fake_config):
+        """The subtype is validated up front, so a bad one costs no API calls."""
+        cm, loc, cfg, sess = self._patched(
+            sm, fake_config, vernacular="Chicken", subdivision="US-VA"
+        )
+        with cm, loc, cfg, sess:
+            with pytest.raises(ValueError, match="disallowed character"):
+                sm.assemble_strain_name(
+                    virus_type="A",
+                    host="Gallus gallus",
+                    location="Richmond",
+                    country="US",
+                    sequence="02",
+                    lab_id="MN.26A",
+                    collection_date=datetime(2026, 2, 15),
+                    subtype="H5/N1",
+                )
+            sm.host_tools.match_species.assert_not_called()
 
     def test_human_host_dropped(self, sm, fake_config):
         cm, loc, cfg, sess = self._patched(
@@ -366,7 +469,7 @@ class TestRunSingle:
         base = dict(
             human=True, host=None, virus_type="H1N1", location="NY",
             country="US", sequence="1", lab_id="LAB", date="2026-02-15",
-            isolate_version=None, lab_passage=False,
+            isolate_version=None, lab_passage=False, subtype=None,
         )
         base.update(over)
         return SimpleNamespace(**base)
@@ -574,6 +677,32 @@ class TestDecodeIsolateSuffix:
             sr.decode_isolate_suffix(suffix)
 
 
+class TestDecodeYearSegment:
+    @pytest.mark.parametrize("segment,expected", [
+        ("2026", ("2026", None)),
+        ("2026(H5N1)", ("2026", "H5N1")),
+        ("1918(H1N1)", ("1918", "H1N1")),
+        ("2026(h5n1)", ("2026", "h5n1")),
+        ("2026(H1N1pdm09)", ("2026", "H1N1pdm09")),
+    ])
+    def test_valid_segments(self, sr, segment, expected):
+        assert sr.decode_year_segment(segment) == expected
+
+    @pytest.mark.parametrize("segment", [
+        "2026(H5N1",     # unclosed
+        "2026H5N1)",     # unopened
+        "2026()",        # empty subtype
+        "20X6(H5N1)",    # non-numeric year
+        "202(H5N1)",     # short year
+        "2026(H5N1)x",   # trailing junk
+        "2026(H5(N1))",  # nested parens
+        "",
+    ])
+    def test_invalid_segments(self, sr, segment):
+        with pytest.raises(ValueError, match="unrecognized year segment"):
+            sr.decode_year_segment(segment)
+
+
 class TestDecodeStrainId:
     def _decode(self, sr, strain_id):
         with patch.object(sr, "resolve_scientific_name",
@@ -712,6 +841,80 @@ class TestHumanRoundTrip:
         assert decoded["location"]["subdivision"] == "Virginia"
         assert decoded["date"] == {"year": "2026"}
         assert decoded["lab_identifier"] == "003-MN.26A"
+
+
+class TestSubtypeRoundTrip:
+    """A generated name carrying a subtype must decode back to it."""
+
+    def _generate(self, sm, fake_config, **over):
+        kwargs = dict(
+            virus_type="A",
+            host="Gallus gallus domesticus",
+            location="Virginia",
+            country="United States",
+            sequence="01",
+            lab_id="MN.26A",
+            collection_date=datetime(2026, 2, 28),
+        )
+        kwargs.update(over)
+        with patch.dict(sm.package_config, fake_config, clear=True), \
+             patch.object(sm.host_tools, "match_species",
+                          return_value={"usage_id": "3F72J"}), \
+             patch.object(sm.host_tools, "scientific_to_vernacular",
+                          return_value="Chicken"), \
+             patch.object(sm.location_tools, "get_country_and_subdivision",
+                          return_value=("United States", "US-VA")), \
+             patch.object(sm.requests, "Session", return_value=_DummySession()):
+            return sm.assemble_strain_name(**kwargs)
+
+    def test_subtype_survives_the_round_trip(self, sm, sr, fake_config):
+        name = self._generate(sm, fake_config, subtype="H5N1")
+        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A/2026(H5N1)"
+
+        with patch.object(sr, "resolve_scientific_name",
+                          return_value="Gallus gallus"):
+            decoded = sr.decode_strain_name(name)
+        assert decoded["subtype"] == "H5N1"
+        assert decoded["date"] == {"year": "2026"}
+
+    def test_absent_subtype_decodes_to_none(self, sm, sr, fake_config):
+        name = self._generate(sm, fake_config)
+        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A/2026"
+
+        with patch.object(sr, "resolve_scientific_name",
+                          return_value="Gallus gallus"):
+            decoded = sr.decode_strain_name(name)
+        assert decoded["subtype"] is None
+
+    def test_subtype_and_suffix_survive_together(self, sm, sr, fake_config):
+        name = self._generate(
+            sm, fake_config, subtype="H5N8", isolate_version=2, lab_passage=True
+        )
+        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026(H5N8)"
+
+        with patch.object(sr, "resolve_scientific_name",
+                          return_value="Gallus gallus"):
+            decoded = sr.decode_strain_name(name)
+        assert decoded["subtype"] == "H5N8"
+        assert decoded["isolate_version"] == 2
+        assert decoded["lab_passage"] is True
+
+
+class TestCsvResolveSubtype:
+    @pytest.mark.parametrize("row,expected", [
+        ({"subtype": "H5N1"}, "H5N1"),
+        ({"subtype": " H5N1 "}, "H5N1"),
+        ({"subtype": ""}, None),
+        ({"subtype": "   "}, None),
+        ({}, None),                       # column absent entirely
+        ({"subtype": None}, None),
+    ])
+    def test_optional_column(self, ch, row, expected):
+        assert ch._resolve_subtype(row) == expected
+
+    def test_listed_as_optional(self, ch):
+        assert "subtype" in ch.OPTIONAL_COLUMNS
+        assert "subtype" not in ch.REQUIRED_COLUMNS
 
 
 # ---------------------------------------------------------------------------

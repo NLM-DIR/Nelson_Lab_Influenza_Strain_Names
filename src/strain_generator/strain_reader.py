@@ -2,10 +2,13 @@
 Decode influenza isolate strain names into structured metadata.
 
 Strain name format:
-    <type>/<host>/<location>/<strain_id>/<year>
+    <type>/<host>/<location>/<strain_id>/<year>[(<subtype>)]
 
 The host segment is omitted for human samples, giving the 4-segment form:
-    <type>/<location>/<strain_id>/<year>
+    <type>/<location>/<strain_id>/<year>[(<subtype>)]
+
+The year carries an optional parenthesised influenza subtype, e.g.
+"2026(H5N1)". It is absent from names whose subtype was not recorded.
 
 Strain ID format:
     <taxonomy_code>-<sequence>-<lab_identifier>[-<suffix>]
@@ -37,6 +40,10 @@ COL_Version = {
 SUFFIX_RE = re.compile(
     r"^(?:v(?P<version>\d+)(?:\.(?P<version_passage>L))?|(?P<passage>L))$"
 )
+
+# Final name segment: a 4-digit year with an optional parenthesised subtype.
+# The subtype body excludes "(", ")" and "/" so it cannot swallow a delimiter.
+YEAR_RE = re.compile(r"^(?P<year>\d{4})(?:\((?P<subtype>[^()/]+)\))?$")
 
 
 def resolve_scientific_name(dataset_key, usage_id, session=None):
@@ -103,6 +110,25 @@ def decode_isolate_suffix(suffix):
     lab_passage = bool(match.group("version_passage") or match.group("passage"))
 
     return (int(version) if version else None), lab_passage
+
+
+def decode_year_segment(segment):
+    """Split the final name segment into its year and optional subtype.
+
+    Returns a tuple of (year, subtype), where year is the 4-digit string and
+    subtype is None when the name records no subtype.
+
+    Raises:
+        ValueError: If the segment is not "YYYY" or "YYYY(<subtype>)".
+    """
+    match = YEAR_RE.match(segment)
+    if not match:
+        raise ValueError(
+            f"unrecognized year segment {segment!r}; expected 'YYYY' or "
+            f"'YYYY(<subtype>)'"
+        )
+
+    return match.group("year"), match.group("subtype")
 
 
 def decode_strain_id(strain_id, session=None):
@@ -175,21 +201,26 @@ def decode_strain_name(strain_name, session=None):
     that the COL usage ID resolves to, so a human sample round-trips back to
     "Human". "host_segment_omitted" records which shape was decoded.
 
+    "subtype" carries the parenthesised subtype from the year segment, or
+    None when the name records none.
+
     Raises:
         ValueError: If the name has neither 4 nor 5 slash-separated segments,
-                    or if the strain ID is malformed.
+                    or if the strain ID or year segment is malformed.
     """
     parts = strain_name.split("/")
     if len(parts) == 5:
-        virus_type, host, location, strain_id, year = parts
+        virus_type, host, location, strain_id, year_segment = parts
         host_omitted = False
     elif len(parts) == 4:
-        virus_type, location, strain_id, year = parts
+        virus_type, location, strain_id, year_segment = parts
         host, host_omitted = None, True
     else:
         raise ValueError(
             f"expected 4 or 5 slash-separated segments, got {len(parts)}"
         )
+
+    year, subtype = decode_year_segment(year_segment)
 
     sid = decode_strain_id(strain_id, session=session)
 
@@ -198,6 +229,7 @@ def decode_strain_name(strain_name, session=None):
 
     return {
         "virus_type": virus_type,
+        "subtype": subtype,
         "host": {
             "vernacular_name": host,
             "scientific_name": sid["scientific_name"],
@@ -220,7 +252,8 @@ def main(argv=None):
         prog="strain-read",
         description=(
             "Decode an influenza isolate strain name into structured metadata. "
-            "Strain name format: <type>/<host>/<location>/<strain_id>/<year>"
+            "Strain name format: "
+            "<type>/<host>/<location>/<strain_id>/<year>[(<subtype>)]"
         ),
     )
     parser.add_argument(
@@ -228,7 +261,7 @@ def main(argv=None):
         metavar="STRAIN_NAME",
         help=(
             "The strain name to decode, e.g. "
-            "'A/Domestic Chicken/US-NY/3F72J.1-002-NEL26-v2.L/2026'"
+            "'A/Domestic Chicken/US-NY/3F72J.1-002-NEL26-v2.L/2026(H5N1)'"
         ),
     )
     parser.add_argument(

@@ -6,7 +6,8 @@ columns are present, generates a strain name for each row, and writes an
 updated CSV with a new strain-name column.
 
 The optional "isolate_version" and "lab_passage" columns feed the trailing
-suffix of the strain ID; both may be omitted entirely.
+suffix of the strain ID, and the optional "subtype" column is appended to the
+year in parentheses; all three may be omitted entirely.
 """
 
 import csv
@@ -31,7 +32,7 @@ REQUIRED_COLUMNS = [
 HOST_COLUMNS = ["host", "human"]
 
 # Recognized but not required. An absent or empty value means "not set".
-OPTIONAL_COLUMNS = ["isolate_version", "lab_passage"]
+OPTIONAL_COLUMNS = ["isolate_version", "lab_passage", "subtype"]
 
 # Values in a "human" column that are treated as truthy.
 TRUE_VALUES = {"1", "true", "t", "yes", "y"}
@@ -97,6 +98,16 @@ def _resolve_lab_passage(row: dict) -> bool:
     return (row.get("lab_passage") or "").strip().lower() in TRUE_VALUES
 
 
+def _resolve_subtype(row: dict):
+    """Read the optional 'subtype' column.
+
+    Returns the raw value, or None when the column is absent or empty.
+    Validation is left to assemble_fn so that a malformed subtype produces
+    the same message in file mode as it does in single mode.
+    """
+    return (row.get("subtype") or "").strip() or None
+
+
 def _row_to_strain_name(
     row: dict,
     assemble_fn: Callable,
@@ -120,6 +131,7 @@ def _row_to_strain_name(
         collection_date=collection_date,
         isolate_version=_resolve_isolate_version(row),
         lab_passage=_resolve_lab_passage(row),
+        subtype=_resolve_subtype(row),
     )
 
 
