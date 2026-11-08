@@ -1,8 +1,10 @@
 """Small dependency-free helpers shared across the package.
 
-This module must stay free of imports so that `csv_handler` can use it
-without pulling in the network-touching modules.
+This module must stay free of package and third-party imports so that
+`csv_handler` can use it without pulling in the network-touching modules.
 """
+
+from functools import wraps
 
 # Canonical scientific name for human samples. The pipeline resolves hosts as
 # scientific names, so the human flag/column must expand to this rather than to
@@ -21,3 +23,13 @@ def letter_to_num(char: str) -> str:
         return "0" + number
     else:
         return number
+
+
+def space_to_underscore(func):
+    """Decorator: replace spaces with underscores in the wrapped function's
+    string result. Applied to the host segment only; the reader reverses it
+    with host_tools.segment_to_vernacular."""
+    @wraps(func)
+    def inner(*args, **kwargs):
+        return func(*args, **kwargs).replace(" ", "_")
+    return inner

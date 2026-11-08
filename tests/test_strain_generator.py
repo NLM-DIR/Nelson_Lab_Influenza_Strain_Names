@@ -40,7 +40,8 @@ def fake_config():
     return {
         "COL_dataset_key": "COL2026",
         "COL_version": "1",
-        "format": "default",
+        "name_format": 2,
+        "isolate_id_format": 3,
     }
 
 
@@ -108,6 +109,76 @@ class TestNormalizeLocation:
 
 
 # ---------------------------------------------------------------------------
+# location_tools  (coco and pycountry ship their data locally; no network)
+# ---------------------------------------------------------------------------
+class TestLocationTools:
+    @pytest.fixture
+    def lt(self):
+        from strain_generator.tools import location_tools
+        return location_tools
+
+    @pytest.mark.parametrize("country", ["United States", "USA", "U.S.A.", "US"])
+    def test_country_aliases(self, lt, country):
+        assert lt.resolve_country(country).alpha_2 == "US"
+
+    def test_korea_is_south_korea(self, lt):
+        assert lt.resolve_country("Korea").alpha_2 == "KR"
+
+    def test_unknown_country_raises(self, lt):
+        with pytest.raises(ValueError, match="Freedonia"):
+            lt.resolve_country("Freedonia")
+
+    @pytest.mark.parametrize("location,country,code", [
+        ("Virginia", "US", "US-VA"),
+        ("virginia", "US", "US-VA"),
+        ("Pensylvania", "US", "US-PA"),   # typo tolerated
+        ("West Virginia", "US", "US-WV"),
+        ("VA", "US", "US-VA"),            # local code
+        ("us-va", "US", "US-VA"),         # full code
+        ("Québec", "Canada", "CA-QC"),    # accents stripped
+        ("Bayern", "Germany", "DE-BY"),
+        ("Yunnan", "China", "CN-YN"),     # pycountry name is "Yunnan Sheng"
+        ("Hebei", "China", "CN-HE"),      # not confused with Hubei
+    ])
+    def test_subdivision_matches(self, lt, location, country, code):
+        assert lt.get_country_and_subdivision(country, location)[1] == code
+
+    @pytest.mark.parametrize("location", ["Carolina", "New"])
+    def test_ambiguous_subdivision_raises(self, lt, location):
+        with pytest.raises(ValueError, match="ambiguous"):
+            lt.get_country_and_subdivision("US", location)
+
+    @pytest.mark.parametrize("location,country,code", [
+        ("Bavaria", "Germany", "DE-BY"),        # English exonym; pycountry has "Bayern"
+        ("brittany", "France", "FR-BRE"),       # alias keys are case-insensitive
+        ("Washington DC", "US", "US-DC"),       # fuzzy alone picks US-WA
+        ("Mexico City", "Mexico", "MX-CMX"),    # fuzzy alone picks MX-MEX
+    ])
+    def test_alias_overrides(self, lt, location, country, code):
+        assert lt.get_country_and_subdivision(country, location)[1] == code
+
+    def test_alias_codes_exist_in_their_country(self, lt):
+        import pycountry
+        for cc, names in lt._load_location_aliases().items():
+            for name, code in names.items():
+                sub = pycountry.subdivisions.get(code=code)
+                assert sub is not None and sub.country_code == cc, (cc, name, code)
+
+    @pytest.mark.parametrize("location,country", [
+        ("Bavaria", "Austria"),           # aliases are scoped to their country
+        ("York", "US"),                   # must not match "New York"
+        ("Fairfax County, Virginia", "US"),
+    ])
+    def test_unmatched_subdivision_raises(self, lt, location, country):
+        with pytest.raises(ValueError, match="no ISO 3166-2 subdivision"):
+            lt.get_country_and_subdivision(country, location)
+
+    @pytest.mark.parametrize("location", [None, "", "   "])
+    def test_no_subdivision_yields_zero(self, lt, location):
+        assert lt.get_country_and_subdivision("US", location) == ("United States", "0")
+
+
+# ---------------------------------------------------------------------------
 # make_strain_id
 # ---------------------------------------------------------------------------
 class TestMakeIsolateSuffix:
@@ -134,10 +205,10 @@ class TestMakeStrainId:
         with patch.dict(sm.package_config, fake_config, clear=True), \
              patch.object(sm.host_tools, "match_species", return_value=taxon) as ms:
             result = sm.make_strain_id(
-                host="Chicken", sequence="15", lab_id="MN.26A"
+                host="Chicken", sequence="15"
             )
-        # Format built by the code: {usage_id}.{version}-{sequence}-{lab_id}
-        assert result == "3F72J.1-15-MN.26A"
+        # Format built by the code: {sequence}-{usage_id}.{version}[-{suffix}]
+        assert result == "15-3F72J.1"
         ms.assert_called_once_with("Chicken", "COL2026")
 
     def test_suffix_appended_when_given(self, sm, fake_config):
@@ -145,17 +216,17 @@ class TestMakeStrainId:
         with patch.dict(sm.package_config, fake_config, clear=True), \
              patch.object(sm.host_tools, "match_species", return_value=taxon):
             result = sm.make_strain_id(
-                host="Chicken", sequence="15", lab_id="MN.26A",
+                host="Chicken", sequence="15",
                 isolate_version=2, lab_passage=True,
             )
-        assert result == "3F72J.1-15-MN.26A-v2.L"
+        assert result == "15-3F72J.1-v2.L"
 
     def test_uses_dataset_key_from_config(self, sm, fake_config):
         cfg = dict(fake_config, COL_dataset_key="OTHERKEY")
         with patch.dict(sm.package_config, cfg, clear=True), \
              patch.object(sm.host_tools, "match_species",
                           return_value={"usage_id": "X"}) as ms:
-            sm.make_strain_id("Duck", "3", "LAB")
+            sm.make_strain_id("Duck", "3")
         ms.assert_called_once_with("Duck", "OTHERKEY")
 
     def test_unresolvable_host_raises_value_error(self, sm, fake_config):
@@ -163,7 +234,7 @@ class TestMakeStrainId:
         with patch.dict(sm.package_config, fake_config, clear=True), \
              patch.object(sm.host_tools, "match_species", return_value=None):
             with pytest.raises(ValueError) as exc:
-                sm.make_strain_id(host="Zzyzx qqqqq", sequence="1", lab_id="LAB")
+                sm.make_strain_id(host="Zzyzx qqqqq", sequence="1")
         assert "could not resolve host" in str(exc.value)
         assert "Zzyzx qqqqq" in str(exc.value)
 
@@ -208,10 +279,44 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="02",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 2, 15),
             )
-        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A/2026"
+        assert name == "A/chicken/US-VA/02-3F72J.1/2026"
+
+    def _assemble(self, sm, fake_config, vernacular, **over):
+        cm, loc, cfg, sess = self._patched(
+            sm, fake_config, vernacular=vernacular, subdivision="US-VA"
+        )
+        kwargs = dict(
+            virus_type="A",
+            host="Meleagris gallopavo domesticus",
+            location="Virginia",
+            country="US",
+            sequence="02",
+            collection_date=datetime(2026, 2, 15),
+        )
+        kwargs.update(over)
+        with cm, loc, cfg, sess:
+            return sm.assemble_strain_name(**kwargs)
+
+    def test_multi_word_host_spaces_become_underscores(self, sm, fake_config):
+        name = self._assemble(sm, fake_config, "Domestic Turkey")
+        assert name == "A/domestic_turkey/US-VA/02-3F72J.1/2026"
+
+    def test_spaces_outside_host_segment_untouched(self, sm, fake_config):
+        """Only the host segment is rewritten; other fields pass through."""
+        name = self._assemble(sm, fake_config, "Domestic Turkey",
+                              sequence="0 2")
+        assert name == "A/domestic_turkey/US-VA/0 2-3F72J.1/2026"
+
+    @pytest.mark.parametrize("vernacular", ["Odd_Bird", "Ducks/Geese"])
+    def test_irreversible_vernacular_rejected(self, sm, fake_config, vernacular):
+        with pytest.raises(ValueError, match="disallowed character"):
+            self._assemble(sm, fake_config, vernacular)
+
+    def test_assemble_keeps_its_name(self, sm):
+        assert sm.assemble_strain_name.__name__ == "assemble_strain_name"
+        assert sm.normalize_host.__name__ == "normalize_host"
 
     def test_subtype_appended_to_year(self, sm, fake_config):
         cm, loc, cfg, sess = self._patched(
@@ -224,11 +329,10 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="02",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 2, 15),
                 subtype="H5N1",
             )
-        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A/2026(H5N1)"
+        assert name == "A/chicken/US-VA/02-3F72J.1/2026(H5N1)"
 
     def test_subtype_omitted_leaves_bare_year(self, sm, fake_config):
         """A name without a subtype must be unchanged by the new parameter."""
@@ -242,11 +346,10 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="02",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 2, 15),
                 subtype=None,
             )
-        assert name == "B/Chicken/US-VA/3F72J.1-02-MN.26A/2026"
+        assert name == "B/chicken/US-VA/02-3F72J.1/2026"
 
     def test_subtype_combines_with_isolate_suffix(self, sm, fake_config):
         cm, loc, cfg, sess = self._patched(
@@ -259,13 +362,12 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="02",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 2, 15),
                 isolate_version=2,
                 lab_passage=True,
                 subtype="H5N1",
             )
-        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A-v2.L/2026(H5N1)"
+        assert name == "A/chicken/US-VA/02-3F72J.1-v2.L/2026(H5N1)"
 
     def test_bad_subtype_rejected_before_any_lookup(self, sm, fake_config):
         """The subtype is validated up front, so a bad one costs no API calls."""
@@ -280,7 +382,6 @@ class TestAssembleStrainName:
                     location="Richmond",
                     country="US",
                     sequence="02",
-                    lab_id="MN.26A",
                     collection_date=datetime(2026, 2, 15),
                     subtype="H5/N1",
                 )
@@ -292,16 +393,16 @@ class TestAssembleStrainName:
         )
         with cm, loc, cfg, sess:
             name = sm.assemble_strain_name(
-                virus_type="H1N1",
+                virus_type="A",
                 host="Human",
                 location="New York",
                 country="US",
                 sequence="042",
-                lab_id="NYSDOH",
                 collection_date=datetime(2026, 11, 3),
+                subtype="H1N1",
             )
         # No host segment for human samples
-        assert name == "H1N1/US-NY/3F72J.1-042-NYSDOH/2026"
+        assert name == "A/US-NY/042-3F72J.1/2026(H1N1)"
 
     def test_collection_month_not_recorded(self, sm, fake_config):
         cm, loc, cfg, sess = self._patched(
@@ -309,16 +410,15 @@ class TestAssembleStrainName:
         )
         with cm, loc, cfg, sess:
             name = sm.assemble_strain_name(
-                virus_type="H3N2",
+                virus_type="A",
                 host="Sus scrofa",
                 location="Ames",
                 country="US",
                 sequence="9",
-                lab_id="LAB",
                 collection_date=datetime(2026, 1, 5),
             )
         # Only the year survives into the name.
-        assert name == "H3N2/Swine/US-IA/3F72J.1-9-LAB/2026"
+        assert name == "A/swine/US-IA/9-3F72J.1/2026"
 
     def test_optional_suffix_reaches_the_name(self, sm, fake_config):
         cm, loc, cfg, sess = self._patched(
@@ -331,11 +431,10 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="02",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 2, 15),
                 isolate_version=2,
             )
-        assert name == "A/Chicken/US-VA/3F72J.1-02-MN.26A-v2/2026"
+        assert name == "A/chicken/US-VA/02-3F72J.1-v2/2026"
 
     def test_empty_subdivision_segment_dropped(self, sm, fake_config):
         # If the location tool yields an empty subdivision string, that
@@ -350,30 +449,28 @@ class TestAssembleStrainName:
                 location="Nowhere",
                 country="US",
                 sequence="1",
-                lab_id="LAB",
                 collection_date=datetime(2026, 6, 1),
             )
         parts = name.split("/")
         assert "" not in parts
         assert parts[0] == "A"
-        assert parts[1] == "Chicken"
+        assert parts[1] == "chicken"
 
-    def test_none_vernacular_should_be_treated_as_human(self, sm, fake_config):
+    def test_unresolvable_vernacular_raises(self, sm, fake_config):
+        """A host with no vernacular name is an error, not a human sample."""
         cm, loc, cfg, sess = self._patched(
             sm, fake_config, vernacular=None, subdivision="US-VA"
         )
         with cm, loc, cfg, sess:
-            name = sm.assemble_strain_name(
-                virus_type="A",
-                host="Unknown",
-                location="Richmond",
-                country="US",
-                sequence="1",
-                lab_id="LAB",
-                collection_date=datetime(2026, 2, 1),
-            )
-        # Intended behavior: no host segment.
-        assert name.startswith("A/US-VA/")
+            with pytest.raises(ValueError, match="not a valid host name"):
+                sm.assemble_strain_name(
+                    virus_type="A",
+                    host="Unknown",
+                    location="Richmond",
+                    country="US",
+                    sequence="1",
+                    collection_date=datetime(2026, 2, 1),
+                )
 
     def test_scientific_to_vernacular_called_with_session(self, sm, fake_config):
         s2v = MagicMock(return_value="Chicken")
@@ -394,7 +491,6 @@ class TestAssembleStrainName:
                 location="Richmond",
                 country="US",
                 sequence="1",
-                lab_id="LAB",
                 collection_date=datetime(2026, 2, 1),
             )
         # host passed positionally, session passed as keyword
@@ -415,7 +511,6 @@ class TestParseArgs:
             "-l", "New York",
             "-c", "US",
             "-n", "042",
-            "-b", "NYSDOH",
             "-d", "2026-11-03",
         ]
         monkeypatch.setattr(sys, "argv", argv)
@@ -432,7 +527,7 @@ class TestParseArgs:
         argv = [
             "strain-gen", "single",
             "-v", "H1N1", "--human",
-            "-l", "New York", "-c", "US", "-n", "042", "-b", "NYSDOH",
+            "-l", "New York", "-c", "US", "-n", "042",
             "-d", "2026-11-03",
             "--isolate-version", "2", "--lab-passage",
         ]
@@ -458,7 +553,7 @@ class TestParseArgs:
     def test_single_missing_required_exits(self, sm, monkeypatch):
         # missing --date
         argv = ["strain-gen", "single", "-v", "H1N1", "--human",
-                "-l", "NY", "-c", "US", "-n", "1", "-b", "LAB"]
+                "-l", "NY", "-c", "US", "-n", "1"]
         monkeypatch.setattr(sys, "argv", argv)
         with pytest.raises(SystemExit):
             sm.parse_args()
@@ -468,7 +563,7 @@ class TestRunSingle:
     def _args(self, **over):
         base = dict(
             human=True, host=None, virus_type="H1N1", location="NY",
-            country="US", sequence="1", lab_id="LAB", date="2026-02-15",
+            country="US", sequence="1", date="2026-02-15",
             isolate_version=None, lab_passage=False, subtype=None,
         )
         base.update(over)
@@ -526,10 +621,11 @@ class TestRunSingle:
         assert "could not resolve host" in str(exc.value)
 
     def test_unknown_country_exits_cleanly(self, sm):
-        """pycountry raises a bare LookupError; report the country instead."""
+        """location_tools raises ValueError; run_single reports it cleanly."""
         args = self._args(country="Freedonia")
         with patch.object(sm, "assemble_strain_name",
-                          side_effect=LookupError("freedonia")):
+                          side_effect=ValueError(
+                              "could not match country 'Freedonia' to an ISO 3166 entry")):
             with pytest.raises(SystemExit) as exc:
                 sm.run_single(args)
         assert "Freedonia" in str(exc.value)
@@ -559,17 +655,36 @@ class TestRunSingle:
 
 class TestRunFile:
     def _args(self, **over):
-        base = dict(input="in.csv", output=None, strain_column="strain_name")
+        base = dict(input="in.csv", output=None, strain_column="strain_name",
+                    error_column="error")
         base.update(over)
         return SimpleNamespace(**base)
 
-    def test_defaults_output_to_input(self, sm, capsys):
-        args = self._args()
+    def test_default_output_is_beside_input(self, sm, capsys, tmp_path):
+        args = self._args(input=str(tmp_path / "in.csv"))
         with patch.object(sm, "process_csv", return_value=(3, [])) as pc:
             sm.run_file(args)
-        assert pc.call_args.kwargs["output_path"] == "in.csv"
+        expected = str(tmp_path / "in_strain_names.csv")
+        assert pc.call_args.kwargs["output_path"] == expected
         err = capsys.readouterr().err
-        assert "Wrote 3 strain name(s) to in.csv" in err
+        assert f"Wrote 3 row(s) to {expected} (3 named)" in err
+
+    def test_default_output_never_overwritten(self, sm, tmp_path):
+        existing = tmp_path / "in_strain_names.csv"
+        existing.write_text("earlier run\n")
+        args = self._args(input=str(tmp_path / "in.csv"))
+        with patch.object(sm, "process_csv") as pc:
+            with pytest.raises(SystemExit) as exc:
+                sm.run_file(args)
+        assert "already exists" in str(exc.value)
+        pc.assert_not_called()
+        assert existing.read_text() == "earlier run\n"
+
+    def test_error_column_forwarded(self, sm, capsys):
+        args = self._args(output="out.csv", error_column="why")
+        with patch.object(sm, "process_csv", return_value=(1, [])) as pc:
+            sm.run_file(args)
+        assert pc.call_args.kwargs["error_column"] == "why"
 
     def test_uses_explicit_output(self, sm, capsys):
         args = self._args(output="out.csv")
@@ -577,13 +692,16 @@ class TestRunFile:
             sm.run_file(args)
         assert pc.call_args.kwargs["output_path"] == "out.csv"
 
-    def test_reports_skipped_rows(self, sm, capsys):
-        args = self._args()
+    def test_failed_rows_reported_and_exit_nonzero(self, sm, capsys):
+        args = self._args(output="out.csv")
         errors = [(4, "missing country"), (7, "bad date")]
         with patch.object(sm, "process_csv", return_value=(1, errors)):
-            sm.run_file(args)
+            with pytest.raises(SystemExit) as exc:
+                sm.run_file(args)
+        assert exc.value.code == 1
         err = capsys.readouterr().err
-        assert "Skipped 2 row(s)" in err
+        assert "Wrote 3 row(s) to out.csv (1 named)" in err
+        assert "Failed to name 2 row(s)" in err
         assert "Row 4: missing country" in err
         assert "Row 7: bad date" in err
 
@@ -710,10 +828,10 @@ class TestDecodeStrainId:
             return sr.decode_strain_id(strain_id)
 
     def test_no_suffix(self, sr):
-        result = self._decode(sr, "3F72J.1-002-NEL26")
+        result = self._decode(sr, "002-3F72J.1")
         assert result["col_usage_id"] == "3F72J"
         assert result["col_dataset_key"] == 315448
-        assert result["lab_identifier"] == "002-NEL26"
+        assert result["sequence"] == "002"
         assert result["isolate_version"] is None
         assert result["lab_passage"] is False
 
@@ -723,26 +841,56 @@ class TestDecodeStrainId:
         ("v2.L", 2, True),
     ])
     def test_suffix_variants(self, sr, suffix, version, passage):
-        result = self._decode(sr, f"3F72J.1-002-NEL26-{suffix}")
+        result = self._decode(sr, f"002-3F72J.1-{suffix}")
         assert result["isolate_version"] == version
         assert result["lab_passage"] is passage
-        # The suffix must not bleed into the lab identifier.
-        assert result["lab_identifier"] == "002-NEL26"
+        # The suffix must not bleed into the sequence.
+        assert result["sequence"] == "002"
 
     def test_legacy_month_is_rejected(self, sr):
         # Names in the pre-suffix format are no longer decodable.
         with pytest.raises(ValueError, match="unrecognized suffix"):
-            self._decode(sr, "3F72J.1-002-NEL26-06")
+            self._decode(sr, "002-3F72J.1-06")
+
+    @pytest.mark.parametrize("strain_id", [
+        "002-NEL26-3F72J.1",         # lab ID, no suffix
+        "002-NEL26-3F72J.1-v2",      # lab ID with suffix
+        "002-MN.001-3F72J.1",        # lab ID shaped like a taxonomy code
+    ])
+    def test_name_with_lab_id_is_rejected(self, sr, strain_id):
+        # Index 1's layout no longer carries a lab ID. Older names must fail
+        # loudly rather than be read under the new layout. The message varies
+        # with the lab ID's shape, so only the exception type is asserted.
+        with pytest.raises(ValueError):
+            self._decode(sr, strain_id)
+
+    def test_taxonomy_first_order_is_rejected(self, sr):
+        # The old taxonomy-first layout is not registered for COL version 1,
+        # so it no longer decodes.
+        with pytest.raises(ValueError, match="matches no known layout"):
+            self._decode(sr, "3F72J.1-002-v2")
+
+    def test_suffix_before_taxonomy_is_rejected(self, sr):
+        # The suffix trails the taxonomy code; a suffix ahead of it is not a
+        # registered layout and does not decode.
+        with pytest.raises(ValueError, match="matches no known layout"):
+            self._decode(sr, "002-v2.L-3F72J.1")
+
+    def test_unknown_col_version_is_rejected(self, sr):
+        # No layout is registered for version 9, so there is no way to know
+        # how a name carrying it was written.
+        with pytest.raises(ValueError, match="matches no known layout"):
+            self._decode(sr, "002-3F72J.9")
 
     def test_too_few_fields(self, sr):
-        with pytest.raises(ValueError, match="expected 3 or 4"):
-            self._decode(sr, "3F72J.1-002")
+        with pytest.raises(ValueError, match="matches no known layout"):
+            self._decode(sr, "3F72J.1")
 
-    def test_hyphenated_lab_id_is_rejected(self, sr):
-        # Documented limitation: a hyphen in the lab ID is indistinguishable
-        # from a suffix field, so it fails loudly rather than mis-parsing.
+    def test_hyphenated_sequence_is_rejected(self, sr):
+        # A hyphen in the sequence is indistinguishable from a field
+        # separator, so it fails loudly rather than mis-parsing.
         with pytest.raises(ValueError):
-            self._decode(sr, "3F72J.1-002-NEL-26")
+            self._decode(sr, "0-02-3F72J.1")
 
 
 class TestDecodeStrainName:
@@ -750,7 +898,7 @@ class TestDecodeStrainName:
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Gallus gallus domesticus"):
             result = sr.decode_strain_name(
-                "A/Chicken/US-VA/3F72J.1-002-MN.26A-v2.L/2026"
+                "A/Chicken/US-VA/002-3F72J.1-v2.L/2026"
             )
         assert result["virus_type"] == "A"
         assert result["host"]["vernacular_name"] == "Chicken"
@@ -767,7 +915,7 @@ class TestDecodeStrainName:
         """The 4-segment form the generator produces for human samples."""
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Homo sapiens"):
-            result = sr.decode_strain_name("A/US-VA/6MB3T.1-003-MN.26A/2026")
+            result = sr.decode_strain_name("A/US-VA/003-6MB3T.1/2026")
         assert result["virus_type"] == "A"
         # Recovered from the local host table, not read from the name.
         assert result["host"]["vernacular_name"] == "Human"
@@ -777,14 +925,14 @@ class TestDecodeStrainName:
             "country": "United States", "subdivision": "Virginia",
         }
         assert result["date"] == {"year": "2026"}
-        assert result["lab_identifier"] == "003-MN.26A"
+        assert result["sequence"] == "003"
         assert result["isolate_version"] is None
         assert result["lab_passage"] is False
 
     def test_omitted_host_segment_with_suffix(self, sr):
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Homo sapiens"):
-            result = sr.decode_strain_name("A/US-VA/6MB3T.1-003-MN.26A-v2.L/2026")
+            result = sr.decode_strain_name("A/US-VA/003-6MB3T.1-v2.L/2026")
         assert result["host"]["vernacular_name"] == "Human"
         assert result["isolate_version"] == 2
         assert result["lab_passage"] is True
@@ -793,14 +941,34 @@ class TestDecodeStrainName:
         """The segment is also dropped when no vernacular name resolved."""
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Zzyzx qqqqq"):
-            result = sr.decode_strain_name("A/US-VA/XXXXX.1-001-LAB/2026")
+            result = sr.decode_strain_name("A/US-VA/001-XXXXX.1/2026")
         assert result["host"]["vernacular_name"] is None
         assert result["host"]["scientific_name"] == "Zzyzx qqqqq"
         assert result["host"]["host_segment_omitted"] is True
 
+    @pytest.mark.parametrize("segment,expected", [
+        ("domestic_turkey", "Domestic Turkey"),
+        ("red_junglefowl", "Red Junglefowl"),
+        ("chicken", "Chicken"),
+        ("blue-winged_teal", "Blue-winged Teal"),
+        ("mallards,_pintails,_and_allies", "mallards, pintails, and allies"),
+    ])
+    def test_host_segment_restored_to_table_spelling(self, sr, segment, expected):
+        with patch.object(sr, "resolve_scientific_name", return_value="X y"):
+            result = sr.decode_strain_name(f"A/{segment}/US-VA/002-3F72J.1/2026")
+        assert result["host"]["vernacular_name"] == expected
+
+    def test_both_shapes_agree_on_vernacular(self, sr):
+        with patch.object(sr, "resolve_scientific_name",
+                          return_value="Gallus gallus"):
+            five = sr.decode_strain_name("A/red_junglefowl/US-AK/002-3F72J.1/2026")
+            four = sr.decode_strain_name("A/US-AK/002-3F72J.1/2026")
+        assert five["host"]["vernacular_name"] == "Red Junglefowl"
+        assert four["host"]["vernacular_name"] == "Red Junglefowl"
+
     @pytest.mark.parametrize("name", [
-        "A/3F72J.1-002-MN.26A",                        # 3 segments
-        "A/Chicken/US-VA/3F72J.1-002-MN.26A/2026/x",   # 6 segments
+        "A/002-3F72J.1",                        # 3 segments
+        "A/Chicken/US-VA/002-3F72J.1/2026/x",   # 6 segments
     ])
     def test_bad_segment_count_raises(self, sr, name):
         with pytest.raises(ValueError) as exc:
@@ -827,10 +995,9 @@ class TestHumanRoundTrip:
                 location="Virginia",
                 country="United States",
                 sequence="003",
-                lab_id="MN.26A",
                 collection_date=datetime(2026, 1, 15),
             )
-        assert name == "A/US-VA/6MB3T.1-003-MN.26A/2026"
+        assert name == "A/US-VA/003-6MB3T.1/2026"
 
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Homo sapiens"):
@@ -840,7 +1007,37 @@ class TestHumanRoundTrip:
         assert decoded["host"]["scientific_name"] == "Homo sapiens"
         assert decoded["location"]["subdivision"] == "Virginia"
         assert decoded["date"] == {"year": "2026"}
-        assert decoded["lab_identifier"] == "003-MN.26A"
+        assert decoded["sequence"] == "003"
+
+
+class TestMultiWordHostRoundTrip:
+    """Regression guard: "_" in the host segment was never read back as a
+    space, so multi-word hosts did not survive encode -> decode."""
+
+    def test_generated_name_decodes_back(self, sm, sr, fake_config):
+        with patch.dict(sm.package_config, fake_config, clear=True), \
+             patch.object(sm.host_tools, "match_species",
+                          return_value={"usage_id": "3ZDJV"}), \
+             patch.object(sm.host_tools, "scientific_to_vernacular",
+                          return_value="Domestic Turkey"), \
+             patch.object(sm.location_tools, "get_country_and_subdivision",
+                          return_value=("United States", "US-VA")), \
+             patch.object(sm.requests, "Session", return_value=_DummySession()):
+            name = sm.assemble_strain_name(
+                virus_type="A",
+                host="Meleagris gallopavo domesticus",
+                location="Virginia",
+                country="United States",
+                sequence="01",
+                collection_date=datetime(2026, 2, 28),
+            )
+        assert name == "A/domestic_turkey/US-VA/01-3ZDJV.1/2026"
+
+        with patch.object(sr, "resolve_scientific_name",
+                          return_value="Meleagris gallopavo"):
+            decoded = sr.decode_strain_name(name)
+        assert decoded["host"]["vernacular_name"] == "Domestic Turkey"
+        assert decoded["host"]["host_segment_omitted"] is False
 
 
 class TestSubtypeRoundTrip:
@@ -853,7 +1050,6 @@ class TestSubtypeRoundTrip:
             location="Virginia",
             country="United States",
             sequence="01",
-            lab_id="MN.26A",
             collection_date=datetime(2026, 2, 28),
         )
         kwargs.update(over)
@@ -869,7 +1065,7 @@ class TestSubtypeRoundTrip:
 
     def test_subtype_survives_the_round_trip(self, sm, sr, fake_config):
         name = self._generate(sm, fake_config, subtype="H5N1")
-        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A/2026(H5N1)"
+        assert name == "A/chicken/US-VA/01-3F72J.1/2026(H5N1)"
 
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Gallus gallus"):
@@ -879,7 +1075,7 @@ class TestSubtypeRoundTrip:
 
     def test_absent_subtype_decodes_to_none(self, sm, sr, fake_config):
         name = self._generate(sm, fake_config)
-        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A/2026"
+        assert name == "A/chicken/US-VA/01-3F72J.1/2026"
 
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Gallus gallus"):
@@ -890,7 +1086,7 @@ class TestSubtypeRoundTrip:
         name = self._generate(
             sm, fake_config, subtype="H5N8", isolate_version=2, lab_passage=True
         )
-        assert name == "A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026(H5N8)"
+        assert name == "A/chicken/US-VA/01-3F72J.1-v2.L/2026(H5N8)"
 
         with patch.object(sr, "resolve_scientific_name",
                           return_value="Gallus gallus"):
@@ -915,6 +1111,100 @@ class TestCsvResolveSubtype:
     def test_listed_as_optional(self, ch):
         assert "subtype" in ch.OPTIONAL_COLUMNS
         assert "subtype" not in ch.REQUIRED_COLUMNS
+
+
+class TestProcessCsv:
+    HEADER = "virus_type,host,location,country,sequence,date\n"
+
+    def _write_input(self, tmp_path, *rows):
+        path = tmp_path / "in.csv"
+        path.write_text(self.HEADER + "".join(r + "\n" for r in rows))
+        return path
+
+    @staticmethod
+    def _read(path):
+        import csv
+        with open(path, newline="") as f:
+            return list(csv.DictReader(f))
+
+    @staticmethod
+    def _assemble(**kw):
+        if kw["host"] == "Bad host":
+            raise ValueError("Bad host is not a valid host name.")
+        return f"A/{kw['sequence']}"
+
+    @pytest.mark.parametrize("same", [
+        lambda p: str(p),
+        lambda p: str(p.parent / "." / p.name),
+    ])
+    def test_refuses_to_write_over_input(self, ch, tmp_path, same):
+        src = self._write_input(tmp_path, "A,Sus scrofa,VA,US,01,2026-01-01")
+        before = src.read_bytes()
+        with pytest.raises(ValueError, match="never overwritten"):
+            ch.process_csv(str(src), same(src), "strain_name", self._assemble)
+        assert src.read_bytes() == before
+
+    def test_refuses_symlink_to_input(self, ch, tmp_path):
+        src = self._write_input(tmp_path, "A,Sus scrofa,VA,US,01,2026-01-01")
+        link = tmp_path / "link.csv"
+        link.symlink_to(src)
+        with pytest.raises(ValueError, match="never overwritten"):
+            ch.process_csv(str(src), str(link), "strain_name", self._assemble)
+
+    def test_failed_rows_kept_with_error(self, ch, tmp_path):
+        src = self._write_input(
+            tmp_path,
+            "A,Sus scrofa,VA,US,01,2026-01-01",
+            "A,Bad host,VA,US,02,2026-01-01",
+            "A,Sus scrofa,VA,US,03,not-a-date",
+        )
+        out = tmp_path / "out.csv"
+        n_ok, errors = ch.process_csv(str(src), str(out), "strain_name",
+                                      self._assemble)
+        assert n_ok == 1
+        assert [row for row, _ in errors] == [3, 4]
+
+        rows = self._read(out)
+        assert [r["sequence"] for r in rows] == ["01", "02", "03"]
+        assert rows[0]["strain_name"] == "A/01"
+        assert rows[0]["error"] == ""
+        assert rows[1]["strain_name"] == ""
+        assert "not a valid host name" in rows[1]["error"]
+        assert rows[2]["strain_name"] == ""
+        assert "'date' must be in" in rows[2]["error"]
+
+    def test_custom_error_column(self, ch, tmp_path):
+        src = self._write_input(tmp_path, "A,Bad host,VA,US,01,2026-01-01")
+        out = tmp_path / "out.csv"
+        ch.process_csv(str(src), str(out), "strain_name", self._assemble,
+                       error_column="why")
+        row = self._read(out)[0]
+        assert "error" not in row
+        assert "not a valid host name" in row["why"]
+
+    def test_request_exception_is_a_row_error(self, ch, tmp_path):
+        import requests as _requests
+        src = self._write_input(tmp_path, "A,Sus scrofa,VA,US,01,2026-01-01")
+        out = tmp_path / "out.csv"
+
+        def offline(**kw):
+            raise _requests.ConnectTimeout("timed out")
+
+        n_ok, errors = ch.process_csv(str(src), str(out), "strain_name", offline)
+        assert n_ok == 0
+        assert errors == [(2, "timed out")]
+
+    @pytest.mark.parametrize("bug", [KeyError("COL_version"), TypeError("x")])
+    def test_programming_errors_propagate(self, ch, tmp_path, bug):
+        src = self._write_input(tmp_path, "A,Sus scrofa,VA,US,01,2026-01-01")
+        out = tmp_path / "out.csv"
+
+        def broken(**kw):
+            raise bug
+
+        with pytest.raises(type(bug)):
+            ch.process_csv(str(src), str(out), "strain_name", broken)
+        assert not out.exists()
 
 
 # ---------------------------------------------------------------------------

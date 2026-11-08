@@ -1,5 +1,7 @@
 .docx
 logs/
+.claude/
+code_review/
 
 # Byte-compiled / optimized / DLL files
 

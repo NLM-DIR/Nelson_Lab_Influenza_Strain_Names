@@ -39,6 +39,26 @@ def get_canon_name(host_string: str) -> str:
         raise KeyError(f"Unknown host: {host_string!r} (normalized: {norm_host!r})")
 
 
+@lru_cache(maxsize=1)
+def _load_vernacular_index() -> dict:
+    """Map each lowercased vernacular name in host_name.json to its spelling."""
+    return {v.lower(): v for v in _load_host_dict().values()}
+
+
+def segment_to_vernacular(segment: str) -> str:
+    """Reverse the host segment of a strain name to a vernacular name.
+
+    The generator lowercases the vernacular and writes its spaces as "_"
+    (see main.normalize_host). This restores the spaces and returns the
+    curated host_name.json spelling when there is one, e.g.
+    "domestic_turkey" -> "Domestic Turkey". A name not in the table, such as
+    one that came from the GBIF fallback, is returned with spaces restored
+    and otherwise as written.
+    """
+    name = segment.replace("_", " ")
+    return _load_vernacular_index().get(name.lower(), name)
+
+
 def gbif_match_usage_key(scientific_name, session=None):
     """Match a scientific name to a GBIF backbone usage key.
 

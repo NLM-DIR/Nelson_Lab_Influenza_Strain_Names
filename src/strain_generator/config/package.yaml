@@ -1,3 +1,4 @@
-format: 2  # 2: ID ends in an optional version/passage suffix instead of the month
+name_format: 2  # 2: ID ends in an optional version/passage suffix instead of the month
+isolate_id_format: 3 # 3: <sequence>-<taxonomy>[-suffix]; the lab ID is no longer recorded
 COL_version: 1
 COL_dataset_key: 315448

@@ -14,8 +14,10 @@ Requires-Dist: biopython==1.87
 Requires-Dist: certifi==2026.6.17
 Requires-Dist: charset-normalizer==3.4.9
 Requires-Dist: colorama==0.4.6
+Requires-Dist: country_converter==1.3.2
 Requires-Dist: idna==3.18
 Requires-Dist: numpy==2.5.1
+Requires-Dist: pandas==2.3.3
 Requires-Dist: phonenumbers==9.0.33
 Requires-Dist: pycountry==26.2.16
 Requires-Dist: python-json-logger==4.1.0
@@ -33,23 +35,23 @@ The purpose of this tool is to establish a standard for influenza strain names w
 
 The names this tool generates encode isolate metadata and are completely reversible so that a samples context will be preserved. Each strain name contains: host name, host taxonomic record, location (country and subdivision), collection year, a unique code for the original lab, and optionally an isolate version number, a lab passage marker, and the influenza subtype.
 
-[Type]/[Vernacular Host]/[ISO 3166 Location]/[Catalogue of Life Taxonomy ID]-[Sequence]-[Lab Identifier]-[Suffix]/[Year]([Subtype])
+[Type]/[Vernacular Host]/[ISO 3166 Location]/[Sequence]-[Lab Identifier]-[Catalogue of Life Taxonomy ID]-[Suffix]/[Year]([Subtype])
 
 The trailing suffix is optional. It is `v<N>` for a versioned isolate, `L` for a lab passage strain, or `v<N>.L` for both:
 
 ```
-A/Chicken/US-VA/3F72J.1-01-MN.26A/2026        no version, not a passage strain
-A/Chicken/US-VA/3F72J.1-01-MN.26A-v2/2026     version 2
-A/Chicken/US-VA/3F72J.1-01-MN.26A-L/2026      lab passage strain
-A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026   version 2, lab passage strain
+A/chicken/US-VA/01-MN.26A-3F72J.1/2026        no version, not a passage strain
+A/chicken/US-VA/01-MN.26A-3F72J.1-v2/2026     version 2
+A/chicken/US-VA/01-MN.26A-3F72J.1-L/2026      lab passage strain
+A/chicken/US-VA/01-MN.26A-3F72J.1-v2.L/2026   version 2, lab passage strain
 ```
 
 The trailing subtype is also optional, and is appended to the year in parentheses:
 
 ```
-A/Chicken/US-VA/3F72J.1-01-MN.26A/2026        subtype not recorded
-A/Chicken/US-VA/3F72J.1-01-MN.26A/2026(H5N1)  subtype H5N1
-A/US-NY/6MB3T.1-042-MN.26A/2026(H3N2)         human sample, subtype H3N2
+A/chicken/US-VA/01-MN.26A-3F72J.1/2026        subtype not recorded
+A/chicken/US-VA/01-MN.26A-3F72J.1/2026(H5N1)  subtype H5N1
+A/US-NY/042-MN.26A-6MB3T.1/2026(H3N2)         human sample, subtype H3N2
 ```
 
 It is omitted rather than left blank when unknown, which is the expected case for influenza B, whose lineages are not H/N subtypes.
@@ -93,10 +95,10 @@ strain-gen single --virus-type "A" --host "Gallus gallus domesticus" --location 
 ### Decoding Names
 
 ```bash
-strain-read "A/Chicken/US-VA/3F72J.1-01-MN.26A-v2.L/2026(H5N1)"
+strain-read "A/chicken/US-VA/01-MN.26A-3F72J.1-v2.L/2026(H5N1)"
 ```
 
-Names produced by earlier versions of this tool, whose ID ended in a two-digit collection month, are not decodable by the current reader.
+The reader picks the ID layout from the Catalogue of Life version number the name itself carries, so names stay readable across future releases. Names produced by earlier versions of this tool are not decodable by the current reader: neither those whose ID ended in a two-digit collection month, nor those whose ID led with the taxonomy code.
 
 ### Inputs
 

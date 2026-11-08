@@ -3,7 +3,8 @@ csv_processor: Batch generation of influenza strain names from a CSV file.
 
 Reads an input CSV containing sample metadata, validates that the required
 columns are present, generates a strain name for each row, and writes an
-updated CSV with a new strain-name column.
+updated CSV with a new strain-name column and an error column. The input file
+is never overwritten, and rows that fail are kept with their error message.
 
 The optional "isolate_version" and "lab_passage" columns feed the trailing
 suffix of the strain ID, and the optional "subtype" column is appended to the
@@ -11,9 +12,11 @@ year in parentheses; all three may be omitted entirely.
 """
 
 import csv
+import os
 from datetime import datetime
 from typing import Callable
 
+import requests
 from tqdm import tqdm
 
 from strain_generator.tools.utils import HUMAN_SCIENTIFIC_NAME
@@ -24,7 +27,6 @@ REQUIRED_COLUMNS = [
     "location",
     "country",
     "sequence",
-    "lab_id",
     "date",
 ]
 
@@ -127,11 +129,21 @@ def _row_to_strain_name(
         location=(row.get("location") or "").strip(),
         country=(row.get("country") or "").strip(),
         sequence=(row.get("sequence") or "").strip(),
-        lab_id=(row.get("lab_id") or "").strip(),
         collection_date=collection_date,
         isolate_version=_resolve_isolate_version(row),
         lab_passage=_resolve_lab_passage(row),
         subtype=_resolve_subtype(row),
+    )
+
+
+def _is_same_file(path_a: str, path_b: str) -> bool:
+    """True if both paths name the same file, including via links."""
+    if os.path.realpath(path_a) == os.path.realpath(path_b):
+        return True
+    return (
+        os.path.exists(path_a)
+        and os.path.exists(path_b)
+        and os.path.samefile(path_a, path_b)
     )
 
 
@@ -140,33 +152,45 @@ def process_csv(
     output_path: str,
     strain_column: str,
     assemble_fn: Callable,
+    error_column: str = "error",
 ) -> tuple[int, list[tuple[int, str]]]:
     """Read a metadata CSV, generate strain names, and write an updated CSV.
 
-    Rows that fail (bad date, missing host, or an error raised by assemble_fn)
-    are skipped and collected for reporting; valid rows are still written.
+    Every input row is written. A row that fails (bad date, missing host, or a
+    ValueError / requests.RequestException raised by assemble_fn) gets an
+    empty strain name and its message in error_column, and is also collected
+    for reporting. Any other exception signals a bug and propagates.
 
     Args:
         input_path:    Path to the input CSV file.
-        output_path:   Path to write the updated CSV (may equal input_path).
+        output_path:   Path to write the updated CSV. Must not be input_path.
         strain_column: Name of the new column to hold generated strain names.
         assemble_fn:   Function with the signature of assemble_strain_name.
+        error_column:  Name of the new column to hold per-row error messages.
 
     Returns:
         A tuple of (number of rows successfully named, list of (row_number,
-        error_message) for skipped rows).
+        error_message) for failed rows).
 
     Raises:
         FileNotFoundError: If input_path does not exist.
-        ValueError:        If the header is absent or missing required columns.
+        ValueError:        If output_path is the input file, or the header is
+                           absent or missing required columns.
     """
+    if _is_same_file(input_path, output_path):
+        raise ValueError(
+            f"output path {output_path!r} is the input file; the input file "
+            f"is never overwritten"
+        )
+
     errors: list[tuple[int, str]] = []
     with open(input_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         _validate_columns(reader.fieldnames)
         fieldnames = list(reader.fieldnames)
-        if strain_column not in fieldnames:
-            fieldnames.append(strain_column)
+        for column in (strain_column, error_column):
+            if column not in fieldnames:
+                fieldnames.append(column)
         # Materialize rows up front so tqdm can show a total, percentage, and ETA.
         input_rows = list(reader)
 
@@ -180,13 +204,15 @@ def process_csv(
     ):
         try:
             row[strain_column] = _row_to_strain_name(row, assemble_fn)
-        except Exception as exc:
+            row[error_column] = ""
+        except (ValueError, requests.RequestException) as exc:
+            row[strain_column] = ""
+            row[error_column] = str(exc)
             errors.append((i, str(exc)))
-            continue
         rows.append(row)
 
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
-    return len(rows), errors
+    return len(rows) - len(errors), errors
