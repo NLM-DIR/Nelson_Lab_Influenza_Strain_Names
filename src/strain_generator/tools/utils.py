@@ -12,6 +12,25 @@ from functools import wraps
 HUMAN_SCIENTIFIC_NAME = "Homo sapiens"
 
 
+def parse_year(raw: str, label: str = "year") -> int:
+    """Parse a collection year, which must be exactly 4 digits.
+
+    Args:
+        raw:   The year as given, e.g. "2026". Surrounding whitespace is ignored.
+        label: How to name the input in the error message ("--year", "'year'").
+
+    Returns:
+        The year as an int.
+
+    Raises:
+        ValueError: If the value is not exactly 4 ASCII digits.
+    """
+    norm = (raw or "").strip()
+    if len(norm) != 4 or not (norm.isascii() and norm.isdigit()):
+        raise ValueError(f"{label} must be a 4-digit year, e.g. 2026, got: {raw!r}")
+    return int(norm)
+
+
 def letter_to_num(char: str) -> str:
     """
     Takes letter and returns position in alphabet. Single digits prefixed with "0".

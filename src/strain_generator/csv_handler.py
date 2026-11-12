@@ -6,20 +6,23 @@ columns are present, generates a strain name for each row, and writes an
 updated CSV with a new strain-name column and an error column. The input file
 is never overwritten, and rows that fail are kept with their error message.
 
-The optional "isolate_version" and "lab_passage" columns feed the trailing
-suffix of the strain ID, and the optional "subtype" column is appended to the
-year in parentheses; all three may be omitted entirely.
+The optional "isolate_version", "lab_passage" and "reverse_genetics" columns
+feed the trailing suffix of the strain ID, the optional "uli" column is placed
+after the taxonomy code, the optional "host_origin" column ("d"/"domestic" or
+"w"/"wild") is prefixed to the taxonomy code, and the optional "subtype" column
+is appended to the year in parentheses. All six columns may be omitted from the
+header, but a non-human row that is neither a lab passage nor a reverse
+genetics strain fails without a host origin.
 """
 
 import csv
 import os
-from datetime import datetime
 from typing import Callable
 
 import requests
 from tqdm import tqdm
 
-from strain_generator.tools.utils import HUMAN_SCIENTIFIC_NAME
+from strain_generator.tools.utils import HUMAN_SCIENTIFIC_NAME, parse_year
 
 # Columns that must always be present in the input CSV header.
 REQUIRED_COLUMNS = [
@@ -27,19 +30,20 @@ REQUIRED_COLUMNS = [
     "location",
     "country",
     "sequence",
-    "date",
+    "year",
 ]
 
 # Either "host" or "human" must be present to determine the host species.
 HOST_COLUMNS = ["host", "human"]
 
 # Recognized but not required. An absent or empty value means "not set".
-OPTIONAL_COLUMNS = ["isolate_version", "lab_passage", "subtype"]
+OPTIONAL_COLUMNS = [
+    "isolate_version", "lab_passage", "reverse_genetics", "subtype", "uli",
+    "host_origin",
+]
 
 # Values in a "human" column that are treated as truthy.
 TRUE_VALUES = {"1", "true", "t", "yes", "y"}
-
-DATE_FORMAT = "%Y-%m-%d"
 
 
 def _validate_columns(fieldnames: list[str]) -> None:
@@ -100,6 +104,11 @@ def _resolve_lab_passage(row: dict) -> bool:
     return (row.get("lab_passage") or "").strip().lower() in TRUE_VALUES
 
 
+def _resolve_reverse_genetics(row: dict) -> bool:
+    """Read the optional 'reverse_genetics' column as a boolean."""
+    return (row.get("reverse_genetics") or "").strip().lower() in TRUE_VALUES
+
+
 def _resolve_subtype(row: dict):
     """Read the optional 'subtype' column.
 
@@ -110,6 +119,25 @@ def _resolve_subtype(row: dict):
     return (row.get("subtype") or "").strip() or None
 
 
+def _resolve_uli(row: dict):
+    """Read the optional 'uli' column.
+
+    Returns the raw value, or None when the column is absent or empty.
+    Validation is left to assemble_fn, as for the subtype.
+    """
+    return (row.get("uli") or "").strip() or None
+
+
+def _resolve_host_origin(row: dict):
+    """Read the optional 'host_origin' column.
+
+    Returns the raw value, or None when the column is absent or empty.
+    Validation, and the check that it is present when required, are left to
+    assemble_fn, as for the subtype.
+    """
+    return (row.get("host_origin") or "").strip() or None
+
+
 def _row_to_strain_name(
     row: dict,
     assemble_fn: Callable,
@@ -117,11 +145,7 @@ def _row_to_strain_name(
     """Build a strain name from a single CSV row."""
     host = _resolve_host(row)
 
-    raw_date = (row.get("date") or "").strip()
-    try:
-        collection_date = datetime.strptime(raw_date, DATE_FORMAT)
-    except ValueError:
-        raise ValueError(f"'date' must be in {DATE_FORMAT} format, got: {raw_date!r}")
+    year = parse_year(row.get("year") or "", "'year'")
 
     return assemble_fn(
         virus_type=(row.get("virus_type") or "").strip(),
@@ -129,10 +153,13 @@ def _row_to_strain_name(
         location=(row.get("location") or "").strip(),
         country=(row.get("country") or "").strip(),
         sequence=(row.get("sequence") or "").strip(),
-        collection_date=collection_date,
+        year=year,
         isolate_version=_resolve_isolate_version(row),
         lab_passage=_resolve_lab_passage(row),
+        reverse_genetics=_resolve_reverse_genetics(row),
         subtype=_resolve_subtype(row),
+        uli=_resolve_uli(row),
+        host_origin=_resolve_host_origin(row),
     )
 
 
@@ -156,7 +183,7 @@ def process_csv(
 ) -> tuple[int, list[tuple[int, str]]]:
     """Read a metadata CSV, generate strain names, and write an updated CSV.
 
-    Every input row is written. A row that fails (bad date, missing host, or a
+    Every input row is written. A row that fails (bad year, missing host, or a
     ValueError / requests.RequestException raised by assemble_fn) gets an
     empty strain name and its message in error_column, and is also collected
     for reporting. Any other exception signals a bug and propagates.

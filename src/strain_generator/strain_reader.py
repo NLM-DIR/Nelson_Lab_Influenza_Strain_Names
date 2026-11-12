@@ -15,8 +15,12 @@ The year carries an optional parenthesised influenza subtype, e.g.
 "2026(H5N1)". It is absent from names whose subtype was not recorded.
 
 Strain ID format:
-    <sequence>-<taxonomy_code>[-<suffix>]
-    taxonomy_code = <col_usage_id>.<col_version>
+    <sequence>-<taxonomy_code>[-<uli>][-<suffix>]
+    taxonomy_code = [<host_origin>.]<col_usage_id>.<col_version>
+
+host_origin is "d" (domestic) or "w" (wild). The generator requires it for
+non-human samples other than lab passage and reverse genetics strains, but the
+reader treats it as optional so names minted before it existed still decode.
 
 col_version is an index into COL_Version, which maps it to the concrete
 Catalogue of Life dataset key the usage ID was minted against, and into
@@ -25,8 +29,9 @@ index. The layout is taken from the version the name itself carries, never
 from the generator's configuration, so names written against an earlier COL
 release stay readable after a new one is adopted.
 
-The suffix is optional and is one of "v<N>" (isolate version), "L" (lab
-passage strain), or "v<N>.L" (both).
+The suffix is optional and joins, in this order, any of "v<N>" (isolate
+version), "L" (lab passage strain) and "RG" (reverse genetics) with ".",
+e.g. "v2", "L.RG", "v2.L.RG".
 """
 
 import re
@@ -45,7 +50,7 @@ COL_Version = {
 }
 
 # Strain-ID layout used by names carrying each COL version index, given as the
-# hyphen-separated fields in order. "suffix" is the optional field and may be
+# hyphen-separated fields in order. "uli" and "suffix" are optional and may be
 # absent from a given ID; every other field is required. Keep this keyed the
 # same way as COL_Version: adopting a new COL release means adding its index to
 # both, and a name's own index is what selects its layout.
@@ -53,17 +58,35 @@ COL_Version = {
 # Index 1 originally carried a lab ID ("sequence", "lab_id", "taxonomy_code",
 # "suffix"). Its layout was deliberately replaced when the lab ID was dropped,
 # so names containing a lab ID no longer decode. Do not repeat this for future
-# changes: register a new index instead.
+# changes: register a new index instead. The optional "uli" was later added to
+# index 1 as a purely additive change: every ID valid before it still decodes
+# the same, because a ULI (5 uppercase letters/digits) never parses as a
+# suffix. The optional "d."/"w." host-origin prefix on the taxonomy code was
+# added the same additive way: an unprefixed taxonomy code decodes as before.
 ID_FORMATS = {
-    1: ("sequence", "taxonomy_code", "suffix"),
+    1: ("sequence", "taxonomy_code", "uli", "suffix"),
 }
 
-# The taxonomy field of a strain ID: "<usage_id>.<col_version>".
-TAXONOMY_RE = re.compile(r"^(?P<usage_id>[A-Za-z0-9]+)\.(?P<col_version>\d+)$")
+# Fields a strain ID may leave out.
+OPTIONAL_ID_FIELDS = ("uli", "suffix")
 
-# Optional trailing segment of the strain ID: "v2", "L", or "v2.L".
+# The taxonomy field of a strain ID: "[<host_origin>.]<usage_id>.<col_version>".
+TAXONOMY_RE = re.compile(
+    r"^(?:(?P<host_origin>[dw])\.)?"
+    r"(?P<usage_id>[A-Za-z0-9]+)\.(?P<col_version>\d+)$"
+)
+
+# Host-origin letter in the taxonomy code -> the value reported when decoding.
+HOST_ORIGINS = {"d": "domestic", "w": "wild"}
+
+# Optional unique laboratory identifier: exactly 5 uppercase letters/digits.
+ULI_RE = re.compile(r"^[A-Z0-9]{5}$")
+
+# Optional trailing segment of the strain ID: "v<N>", "L" and "RG", in that
+# order, joined by "." ("v2", "L.RG", "v2.L.RG"). The separators are loose
+# here; decode_isolate_suffix checks the suffix is in its canonical form.
 SUFFIX_RE = re.compile(
-    r"^(?:v(?P<version>\d+)(?:\.(?P<version_passage>L))?|(?P<passage>L))$"
+    r"^(?:v(?P<version>\d+))?\.?(?P<passage>L)?\.?(?P<reverse_genetics>RG)?$"
 )
 
 # Final name segment: a 4-digit year with an optional parenthesised subtype.
@@ -119,22 +142,33 @@ def decode_location(location):
 def decode_isolate_suffix(suffix):
     """Split the optional trailing segment of a strain ID.
 
-    Returns a tuple of (isolate_version, lab_passage), where isolate_version
-    is an int or None.
+    Returns a tuple of (isolate_version, lab_passage, reverse_genetics),
+    where isolate_version is an int or None.
 
     Raises:
-        ValueError: If the suffix is not "v<N>", "L", or "v<N>.L".
+        ValueError: If the suffix is not some of "v<N>", "L" and "RG", in that
+                    order, joined by ".".
     """
     match = SUFFIX_RE.match(suffix)
-    if not match:
+    canonical = match and ".".join(
+        part for part in (
+            match.group("version") and f"v{match.group('version')}",
+            match.group("passage"),
+            match.group("reverse_genetics"),
+        ) if part
+    )
+    if not suffix or canonical != suffix:
         raise ValueError(
-            f"unrecognized suffix {suffix!r}; expected 'v<N>', 'L', or 'v<N>.L'"
+            f"unrecognized suffix {suffix!r}; expected some of 'v<N>', 'L' and "
+            f"'RG', in that order, joined by '.' (e.g. 'v2', 'L.RG', 'v2.L.RG')"
         )
 
     version = match.group("version")
-    lab_passage = bool(match.group("version_passage") or match.group("passage"))
-
-    return (int(version) if version else None), lab_passage
+    return (
+        int(version) if version else None,
+        bool(match.group("passage")),
+        bool(match.group("reverse_genetics")),
+    )
 
 
 def decode_year_segment(segment):
@@ -163,15 +197,16 @@ def describe_id_format(col_version):
         col_version: COL version index registered in ID_FORMATS.
 
     Returns:
-        e.g. "<sequence>-<usage_id>.1[-<suffix>]".
+        e.g. "<sequence>-[d|w.]<usage_id>.1[-<uli>][-<suffix>]".
     """
     rendered = ""
     for field in ID_FORMATS[col_version]:
-        if field == "suffix":
-            rendered += "[-<suffix>]"
+        if field in OPTIONAL_ID_FIELDS:
+            rendered += f"[-<{field}>]"
             continue
         token = (
-            f"<usage_id>.{col_version}" if field == "taxonomy_code" else f"<{field}>"
+            f"[d|w.]<usage_id>.{col_version}"
+            if field == "taxonomy_code" else f"<{field}>"
         )
         rendered += f"-{token}" if rendered else token
     return rendered
@@ -180,8 +215,10 @@ def describe_id_format(col_version):
 def id_format_variants(layout):
     """Yield the concrete field sequences a layout can appear as.
 
-    The suffix field is optional, so a layout matches IDs both with and
-    without it.
+    Each field in OPTIONAL_ID_FIELDS may be present or absent, so a layout
+    matches IDs with any combination of them. Of two variants with the same
+    length, the one keeping "uli" comes first; select_id_format accepts it
+    only when that field parses as a ULI.
 
     Args:
         layout: An ID_FORMATS entry.
@@ -189,16 +226,19 @@ def id_format_variants(layout):
     Yields:
         Tuples of field names, longest first.
     """
-    yield layout
-    if "suffix" in layout:
-        yield tuple(field for field in layout if field != "suffix")
+    optional = [f for f in OPTIONAL_ID_FIELDS if f in layout]
+    variants = []
+    for mask in range(2 ** len(optional)):
+        dropped = {f for i, f in enumerate(optional) if mask >> i & 1}
+        variants.append(tuple(f for f in layout if f not in dropped))
+    yield from sorted(variants, key=lambda v: (len(v), "uli" in v), reverse=True)
 
 
 def select_id_format(parts):
     """Pick the strain-ID layout selected by the COL version inside the ID.
 
     A layout is accepted only when the field in its "taxonomy_code" position
-    parses as "<usage_id>.<col_version>" and that col_version is the index the
+    parses as "[<host_origin>.]<usage_id>.<col_version>" and that col_version is the index the
     layout is registered under. The version a name carries is therefore what
     decides how the name is read.
 
@@ -218,6 +258,8 @@ def select_id_format(parts):
         for fields in id_format_variants(layout):
             if len(parts) != len(fields):
                 continue
+            if "uli" in fields and not ULI_RE.match(parts[fields.index("uli")]):
+                continue
             match = TAXONOMY_RE.match(parts[fields.index("taxonomy_code")])
             if match and int(match.group("col_version")) == col_version:
                 return col_version, fields, match
@@ -232,8 +274,8 @@ def select_id_format(parts):
 def decode_strain_id(strain_id, session=None):
     """Break the strain ID into its components and resolve the taxonomy code.
 
-    strain_id = <sequence>-<taxonomy_code>[-<suffix>]
-    taxonomy_code = <usage_id>.<version>
+    strain_id = <sequence>-<taxonomy_code>[-<uli>][-<suffix>]
+    taxonomy_code = [<host_origin>.]<usage_id>.<version>
 
     The layout is chosen from the version the taxonomy code carries, so the ID
     says how it should be read; see ID_FORMATS.
@@ -248,11 +290,14 @@ def decode_strain_id(strain_id, session=None):
     values = dict(zip(fields, parts))
 
     if "suffix" in values:
-        isolate_version, lab_passage = decode_isolate_suffix(values["suffix"])
+        isolate_version, lab_passage, reverse_genetics = decode_isolate_suffix(
+            values["suffix"]
+        )
     else:
-        isolate_version, lab_passage = None, False
+        isolate_version, lab_passage, reverse_genetics = None, False, False
 
     usage_id = taxonomy_match.group("usage_id")
+    host_origin = HOST_ORIGINS.get(taxonomy_match.group("host_origin"))
     dataset_key = COL_Version.get(col_version)
 
     scientific_name = resolve_scientific_name(dataset_key, usage_id, session=session)
@@ -261,10 +306,13 @@ def decode_strain_id(strain_id, session=None):
         "taxonomy_code": values["taxonomy_code"],
         "col_dataset_key": dataset_key,
         "col_usage_id": usage_id,
+        "host_origin": host_origin,
         "scientific_name": scientific_name,
         "sequence": values["sequence"],
+        "uli": values.get("uli"),
         "isolate_version": isolate_version,
         "lab_passage": lab_passage,
+        "reverse_genetics": reverse_genetics,
     }
 
 
@@ -276,10 +324,7 @@ def _vernacular_from_scientific(scientific_name):
     """
     if not scientific_name:
         return None
-    try:
-        return host_tools.get_canon_name(scientific_name)
-    except KeyError:
-        return None
+    return host_tools.species_vernacular(scientific_name)
 
 
 def decode_strain_name(strain_name, session=None):
@@ -300,6 +345,10 @@ def decode_strain_name(strain_name, session=None):
     and the result is given in its host-table spelling, so both shapes agree
     ("red_junglefowl" and an omitted Gallus gallus segment both decode to
     "Red Junglefowl").
+
+    "host.origin" is "domestic" or "wild" from the taxonomy code's prefix, or
+    None when the name carries none (human samples, lab passage or reverse
+    genetics strains, and names minted before the prefix existed).
 
     "subtype" carries the parenthesised subtype from the year segment, or
     None when the name records none.
@@ -337,14 +386,17 @@ def decode_strain_name(strain_name, session=None):
             "col_dataset_key": sid["col_dataset_key"],
             "col_usage_id": sid["col_usage_id"],
             "host_segment_omitted": host_omitted,
+            "origin": sid["host_origin"],
         },
         "location": decode_location(location),
         "date": {
             "year": year,
         },
         "sequence": sid["sequence"],
+        "uli": sid["uli"],
         "isolate_version": sid["isolate_version"],
         "lab_passage": sid["lab_passage"],
+        "reverse_genetics": sid["reverse_genetics"],
     }
 
 
@@ -362,7 +414,7 @@ def main(argv=None):
         metavar="STRAIN_NAME",
         help=(
             "The strain name to decode, e.g. "
-            "'A/chicken/US-NY/002-3F72J.1-v2.L/2026(H5N1)'"
+            "'A/chicken/US-NY/002-d.3F72J.1-v2.L/2026(H5N1)'"
         ),
     )
     parser.add_argument(

@@ -1,4 +1,5 @@
 name_format: 2  # 2: ID ends in an optional version/passage suffix instead of the month
-isolate_id_format: 3 # 3: <sequence>-<taxonomy>[-suffix]; the lab ID is no longer recorded
+isolate_id_format: 5 # 5: optional d|w host-origin prefix on taxonomy; 4: <sequence>-<taxonomy>[-ULI][-suffix]; 3 had no ULI
 COL_version: 1
 COL_dataset_key: 315448
+host_resolver: host_map  # host_map: data/host_map.json, scientific or common names; legacy: data/host_name.json, scientific names only

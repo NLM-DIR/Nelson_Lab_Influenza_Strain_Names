@@ -1,0 +1,1244 @@
+{
+  "species": {
+    "Homo sapiens": {
+      "name": "Human"
+    },
+    "Sus scrofa": {
+      "name": "Wild Boar"
+    },
+    "Gallus gallus": {
+      "name": "Red Junglefowl"
+    },
+    "Gallus gallus domesticus": {
+      "name": "Chicken"
+    },
+    "Anas platyrhynchos": {
+      "name": "Mallard"
+    },
+    "Bos taurus": {
+      "name": "Domestic Cattle"
+    },
+    "Meleagris gallopavo": {
+      "name": "Wild Turkey"
+    },
+    "Meleagris gallopavo domesticus": {
+      "name": "Domestic Turkey"
+    },
+    "Arenaria interpres": {
+      "name": "Ruddy Turnstone"
+    },
+    "Branta canadensis": {
+      "name": "Canada Goose"
+    },
+    "Sus scrofa scrofa": {
+      "name": "Central European Boar"
+    },
+    "Spatula discors": {
+      "name": "Blue-winged Teal"
+    },
+    "Equus caballus": {
+      "name": "Domestic Horse"
+    },
+    "Anas acuta": {
+      "name": "Northern Pintail"
+    },
+    "Anas carolinensis": {
+      "name": "Green-winged Teal"
+    },
+    "Anser caerulescens": {
+      "name": "Snow Goose"
+    },
+    "Buteo jamaicensis": {
+      "name": "Red-tailed Hawk"
+    },
+    "Aegypius monachus": {
+      "name": "Cinereous Vulture"
+    },
+    "Canis lupus familiaris": {
+      "name": "Domestic Dog"
+    },
+    "Haliaeetus leucocephalus": {
+      "name": "Bald Eagle"
+    },
+    "Bubo virginianus": {
+      "name": "Great Horned Owl"
+    },
+    "Cairina moschata": {
+      "name": "Muscovy Duck"
+    },
+    "Chroicocephalus ridibundus": {
+      "name": "Black-headed Gull"
+    },
+    "Spatula clypeata": {
+      "name": "Northern Shoveler"
+    },
+    "Anas rubripes": {
+      "name": "American Black Duck"
+    },
+    "Corvus brachyrhynchos": {
+      "name": "American Crow"
+    },
+    "Sus scrofa domesticus": {
+      "name": "Domestic Pig"
+    },
+    "Anas crecca": {
+      "name": "Eurasian Teal"
+    },
+    "Cathartes aura": {
+      "name": "Turkey Vulture"
+    },
+    "Mareca americana": {
+      "name": "American Wigeon"
+    },
+    "Larus glaucescens": {
+      "name": "Glaucous-winged Gull"
+    },
+    "Felis catus": {
+      "name": "Domestic Cat"
+    },
+    "Larus argentatus": {
+      "name": "European Herring Gull"
+    },
+    "Mareca strepera": {
+      "name": "Gadwall"
+    },
+    "Aix sponsa": {
+      "name": "Wood Duck"
+    },
+    "Anser albifrons": {
+      "name": "Greater White-fronted Goose"
+    },
+    "Falco peregrinus": {
+      "name": "Peregrine Falcon"
+    },
+    "Cygnus olor": {
+      "name": "Mute Swan"
+    },
+    "Calidris alba": {
+      "name": "Sanderling"
+    },
+    "Somateria mollissima": {
+      "name": "Common Eider"
+    },
+    "Calidris canutus": {
+      "name": "Red Knot"
+    },
+    "Leucophaeus atricilla": {
+      "name": "Laughing Gull"
+    },
+    "Larus marinus": {
+      "name": "Great Black-backed Gull"
+    },
+    "Bucephala clangula": {
+      "name": "Common Goldeneye"
+    },
+    "Branta hutchinsii": {
+      "name": "Cackling Goose"
+    },
+    "Larus delawarensis": {
+      "name": "Ring-billed Gull"
+    },
+    "Morus bassanus": {
+      "name": "Northern Gannet"
+    },
+    "Uria aalge": {
+      "name": "Common Murre"
+    },
+    "Mephitis mephitis": {
+      "name": "Striped Skunk"
+    },
+    "Corvus corax": {
+      "name": "Common Raven"
+    },
+    "Pelecanus erythrorhynchos": {
+      "name": "American White Pelican"
+    },
+    "Anser fabalis": {
+      "name": "Taiga Bean Goose"
+    },
+    "Spatula cyanoptera": {
+      "name": "Cinnamon Teal"
+    },
+    "Vulpes vulpes": {
+      "name": "Red Fox"
+    },
+    "Coragyps atratus": {
+      "name": "Black Vulture"
+    },
+    "Aythya collaris": {
+      "name": "Ring-necked Duck"
+    },
+    "Anser canagicus": {
+      "name": "Emperor Goose"
+    },
+    "Mareca penelope": {
+      "name": "Eurasian Wigeon"
+    },
+    "Bucephala albeola": {
+      "name": "Bufflehead"
+    },
+    "Phalacrocorax auritus": {
+      "name": "Double-crested Cormorant"
+    },
+    "Aythya affinis": {
+      "name": "Lesser Scaup"
+    },
+    "Larus hyperboreus": {
+      "name": "Glaucous Gull"
+    },
+    "Bubo scandiacus": {
+      "name": "Snowy Owl"
+    },
+    "Larus dominicanus": {
+      "name": "Kelp Gull"
+    },
+    "Accipiter cooperii": {
+      "name": "Cooper's Hawk"
+    },
+    "Cygnus columbianus": {
+      "name": "Tundra Swan"
+    },
+    "Mustela lutreola": {
+      "name": "European Mink"
+    },
+    "Anser anser": {
+      "name": "Greylag Goose"
+    },
+    "Larus occidentalis": {
+      "name": "Western Gull"
+    },
+    "Mirounga angustirostris": {
+      "name": "Northern Elephant Seal"
+    },
+    "Struthio camelus": {
+      "name": "Common Ostrich"
+    },
+    "Buteo lineatus": {
+      "name": "Red-shouldered Hawk"
+    },
+    "Lophodytes cucullatus": {
+      "name": "Hooded Merganser"
+    },
+    "Gyps fulvus": {
+      "name": "Eurasian Griffon"
+    },
+    "Sterna hirundo": {
+      "name": "Common Tern"
+    },
+    "Mus musculus": {
+      "name": "House Mouse"
+    },
+    "Anas gracilis": {
+      "name": "Grey Teal"
+    },
+    "Phoca vitulina": {
+      "name": "Harbor Seal"
+    },
+    "Tadorna ferruginea": {
+      "name": "Ruddy Shelduck"
+    },
+    "Capra hircus": {
+      "name": "Domestic Goat"
+    },
+    "Alectoris chukar": {
+      "name": "Chukar"
+    },
+    "Calidris alpina": {
+      "name": "Dunlin"
+    },
+    "Mergus merganser": {
+      "name": "Common Merganser"
+    },
+    "Phasianus colchicus": {
+      "name": "Ring-necked Pheasant"
+    },
+    "Mirounga leonina": {
+      "name": "Southern Elephant Seal"
+    },
+    "Larus fuscus": {
+      "name": "Lesser Black-backed Gull"
+    },
+    "Ardea herodias": {
+      "name": "Great Blue Heron"
+    },
+    "Clangula hyemalis": {
+      "name": "Long-tailed Duck"
+    },
+    "Buteo lagopus": {
+      "name": "Rough-legged Hawk"
+    },
+    "Columba livia": {
+      "name": "Rock Pigeon"
+    },
+    "Dromaius novaehollandiae": {
+      "name": "Emu"
+    },
+    "Antigone canadensis": {
+      "name": "Sandhill Crane"
+    },
+    "Hydroprogne caspia": {
+      "name": "Caspian Tern"
+    },
+    "Spatula querquedula": {
+      "name": "Garganey"
+    },
+    "Puma concolor": {
+      "name": "Mountain Lion"
+    },
+    "Procyon lotor": {
+      "name": "Common Raccoon"
+    },
+    "Cygnus atratus": {
+      "name": "Black Swan"
+    },
+    "Rynchops niger": {
+      "name": "Black Skimmer"
+    },
+    "Branta leucopsis": {
+      "name": "Barnacle Goose"
+    },
+    "Aythya marila": {
+      "name": "Greater Scaup"
+    },
+    "Anser cygnoides": {
+      "name": "Swan Goose"
+    },
+    "Quiscalus quiscula": {
+      "name": "Common Grackle"
+    },
+    "Arctocephalus gazella": {
+      "name": "Antarctic Fur Seal"
+    },
+    "Anser rossii": {
+      "name": "Ross's Goose"
+    },
+    "Lynx rufus": {
+      "name": "Bobcat"
+    },
+    "Tyto alba": {
+      "name": "Western Barn Owl"
+    },
+    "Rissa tridactyla": {
+      "name": "Black-legged Kittiwake"
+    },
+    "Buteo buteo": {
+      "name": "Common Buzzard"
+    },
+    "Corvus ossifragus": {
+      "name": "Fish Crow"
+    },
+    "Melanitta fusca": {
+      "name": "Velvet Scoter"
+    },
+    "Ardea cinerea": {
+      "name": "Grey Heron"
+    },
+    "Calidris fuscicollis": {
+      "name": "White-rumped Sandpiper"
+    },
+    "Numenius arquata": {
+      "name": "Eurasian Curlew"
+    },
+    "Alopochen aegyptiaca": {
+      "name": "Egyptian Goose"
+    },
+    "Anas poecilorhyncha": {
+      "name": "Indian Spot-billed Duck"
+    },
+    "Nycticorax nycticorax": {
+      "name": "Black-crowned Night Heron"
+    },
+    "Cyanocitta cristata": {
+      "name": "Blue Jay"
+    },
+    "Anas castanea": {
+      "name": "Chestnut Teal"
+    },
+    "Larus californicus": {
+      "name": "California Gull"
+    },
+    "Chroicocephalus philadelphia": {
+      "name": "Bonaparte's Gull"
+    },
+    "Coscoroba coscoroba": {
+      "name": "Coscoroba Swan"
+    },
+    "Melanitta perspicillata": {
+      "name": "Surf Scoter"
+    },
+    "Tursiops truncatus": {
+      "name": "Common Bottlenose Dolphin"
+    },
+    "Anser caerulescens caerulescens": {
+      "name": "Lesser Snow Goose"
+    },
+    "Chenonetta jubata": {
+      "name": "Australian Wood Duck"
+    },
+    "Fulica americana": {
+      "name": "American Coot"
+    },
+    "Gavia immer": {
+      "name": "Common Loon"
+    },
+    "Oxyura jamaicensis": {
+      "name": "Ruddy Duck"
+    },
+    "Podiceps cristatus": {
+      "name": "Great Crested Grebe"
+    },
+    "Passer domesticus": {
+      "name": "House Sparrow"
+    },
+    "Stercorarius maccormicki": {
+      "name": "South Polar Skua"
+    },
+    "Accipiter striatus": {
+      "name": "Sharp-shinned Hawk"
+    },
+    "Ardea alba": {
+      "name": "Great Egret"
+    },
+    "Bubo bubo": {
+      "name": "Eurasian Eagle-Owl"
+    },
+    "Cygnus melancoryphus": {
+      "name": "Black-necked Swan"
+    },
+    "Enhydra lutris": {
+      "name": "Sea Otter"
+    },
+    "Himantopus mexicanus": {
+      "name": "Black-necked Stilt"
+    },
+    "Phoenicopterus roseus": {
+      "name": "Greater Flamingo"
+    },
+    "Ciconia ciconia": {
+      "name": "White Stork"
+    },
+    "Astur gentilis": {
+      "name": "Eurasian Goshawk"
+    },
+    "Buteo swainsoni": {
+      "name": "Swainson's Hawk"
+    },
+    "Stercorarius antarcticus": {
+      "name": "Brown Skua"
+    },
+    "Numida meleagris": {
+      "name": "Helmeted Guineafowl"
+    },
+    "Buteo platypterus": {
+      "name": "Broad-winged Hawk"
+    },
+    "Aythya valisineria": {
+      "name": "Canvasback"
+    },
+    "Parabuteo unicinctus": {
+      "name": "Harris's Hawk"
+    },
+    "Circus hudsonius": {
+      "name": "Northern Harrier"
+    },
+    "Pandion haliaetus": {
+      "name": "Osprey"
+    },
+    "Phalacrocorax carbo": {
+      "name": "Great Cormorant"
+    },
+    "Calidris acuminata": {
+      "name": "Sharp-tailed Sandpiper"
+    },
+    "Histrionicus histrionicus": {
+      "name": "Harlequin Duck"
+    },
+    "Dendrocygna viduata": {
+      "name": "White-faced Whistling-Duck"
+    },
+    "Turdus migratorius": {
+      "name": "American Robin"
+    },
+    "Pelecanus crispus": {
+      "name": "Dalmatian Pelican"
+    },
+    "Anas fulvigula": {
+      "name": "Mottled Duck"
+    },
+    "Pekania pennanti": {
+      "name": "Fisher"
+    },
+    "Pusa caspica": {
+      "name": "Caspian Seal"
+    },
+    "Sturnus vulgaris": {
+      "name": "European Starling"
+    },
+    "Rattus norvegicus": {
+      "name": "Brown Rat"
+    },
+    "Aquila chrysaetos": {
+      "name": "Golden Eagle"
+    },
+    "Ardeola bacchus": {
+      "name": "Chinese Pond-Heron"
+    },
+    "Asio otus": {
+      "name": "Long-eared Owl"
+    },
+    "Egretta thula": {
+      "name": "Snowy Egret"
+    },
+    "Larus brachyrhynchus": {
+      "name": "Short-billed Gull"
+    },
+    "Mustela nigripes": {
+      "name": "Black-footed Ferret"
+    },
+    "Rhea americana": {
+      "name": "Greater Rhea"
+    },
+    "Scolopax rusticola": {
+      "name": "Eurasian Woodcock"
+    },
+    "Ursus maritimus": {
+      "name": "Polar Bear"
+    },
+    "Parus major": {
+      "name": "Great Tit"
+    },
+    "Tringa totanus": {
+      "name": "Common Redshank"
+    },
+    "Pygoscelis papua": {
+      "name": "Gentoo Penguin"
+    },
+    "Catharus guttatus": {
+      "name": "Hermit Thrush"
+    },
+    "Rhizomys pruinosus": {
+      "name": "Hoary Bamboo Rat"
+    },
+    "Didelphis virginiana": {
+      "name": "Virginia Opossum"
+    },
+    "Furnarius rufus": {
+      "name": "Rufous Hornero"
+    },
+    "Grus americana": {
+      "name": "Whooping Crane"
+    },
+    "Strix aluco": {
+      "name": "Tawny Owl"
+    },
+    "Turdus pilaris": {
+      "name": "Fieldfare"
+    },
+    "Lobodon carcinophaga": {
+      "name": "Crabeater Seal"
+    },
+    "Milvus milvus": {
+      "name": "Red Kite"
+    },
+    "Bubalus bubalis": {
+      "name": "Domestic Water Buffalo"
+    },
+    "Anous stolidus": {
+      "name": "Brown Noddy"
+    },
+    "Leptonychotes weddellii": {
+      "name": "Weddell Seal"
+    },
+    "Macronectes giganteus": {
+      "name": "Southern Giant Petrel"
+    },
+    "Rupornis magnirostris": {
+      "name": "Roadside Hawk"
+    },
+    "Tyto furcata": {
+      "name": "American Barn Owl"
+    },
+    "Aquila fasciata": {
+      "name": "Bonelli's Eagle"
+    },
+    "Calidris pugnax": {
+      "name": "Ruff"
+    },
+    "Marmaronetta angustirostris": {
+      "name": "Marbled Duck"
+    }
+  },
+  "groups": {
+    "duck": {
+      "name": "Duck",
+      "taxon": "Anatidae",
+      "members": [
+        "Aix",
+        "Anas",
+        "Aythya",
+        "Bucephala",
+        "Cairina",
+        "Chenonetta",
+        "Clangula",
+        "Dendrocygna",
+        "Histrionicus",
+        "Lophodytes",
+        "Mareca",
+        "Marmaronetta",
+        "Melanitta",
+        "Mergus",
+        "Oxyura",
+        "Somateria",
+        "Spatula",
+        "Tadorna"
+      ],
+      "heads": [
+        "duck",
+        "duckling",
+        "teal",
+        "wigeon",
+        "widgeon",
+        "pintail",
+        "shoveler",
+        "scaup",
+        "pochard",
+        "merganser",
+        "eider",
+        "scoter",
+        "shelduck",
+        "goldeneye",
+        "whistling-duck"
+      ]
+    },
+    "goose": {
+      "name": "Goose",
+      "taxon": "Anatidae",
+      "members": [
+        "Anser",
+        "Branta",
+        "Alopochen"
+      ],
+      "heads": [
+        "goose",
+        "geese",
+        "gosling",
+        "brant",
+        "sheldgoose"
+      ]
+    },
+    "swan": {
+      "name": "Swan",
+      "taxon": "Anatidae",
+      "members": [
+        "Cygnus",
+        "Coscoroba"
+      ],
+      "heads": [
+        "swan",
+        "cygnet"
+      ]
+    },
+    "waterfowl": {
+      "name": "Waterfowl",
+      "taxon": "Anatidae",
+      "members": [
+        "Anatidae"
+      ],
+      "heads": [
+        "waterfowl",
+        "wildfowl"
+      ]
+    },
+    "gamebird": {
+      "name": "Gamebird",
+      "taxon": "Galliformes",
+      "members": [
+        "Galliformes",
+        "Phasianidae",
+        "Numididae"
+      ],
+      "heads": [
+        "gamebird",
+        "game bird",
+        "pheasant",
+        "partridge",
+        "quail",
+        "grouse",
+        "turkey",
+        "guineafowl",
+        "guinea fowl",
+        "junglefowl",
+        "peafowl",
+        "poult"
+      ]
+    },
+    "gull": {
+      "name": "Gull",
+      "taxon": "Laridae",
+      "members": [
+        "Larus",
+        "Chroicocephalus",
+        "Leucophaeus",
+        "Rissa",
+        "Laridae"
+      ],
+      "heads": [
+        "gull",
+        "seagull",
+        "kittiwake"
+      ]
+    },
+    "tern": {
+      "name": "Tern",
+      "taxon": "Laridae",
+      "members": [
+        "Sterna",
+        "Hydroprogne",
+        "Anous",
+        "Thalasseus",
+        "Sternula"
+      ],
+      "heads": [
+        "tern",
+        "noddy"
+      ]
+    },
+    "skua": {
+      "name": "Skua",
+      "taxon": "Stercorariidae",
+      "members": [
+        "Stercorariidae"
+      ],
+      "heads": [
+        "skua",
+        "jaeger"
+      ]
+    },
+    "auk": {
+      "name": "Auk",
+      "taxon": "Alcidae",
+      "members": [
+        "Alcidae"
+      ],
+      "heads": [
+        "auk",
+        "murre",
+        "guillemot",
+        "puffin",
+        "razorbill",
+        "murrelet",
+        "auklet"
+      ]
+    },
+    "shorebird": {
+      "name": "Shorebird",
+      "taxon": "Charadriiformes",
+      "members": [
+        "Scolopacidae",
+        "Recurvirostridae",
+        "Charadriidae",
+        "Haematopodidae"
+      ],
+      "heads": [
+        "shorebird",
+        "wader",
+        "sandpiper",
+        "dunlin",
+        "knot",
+        "sanderling",
+        "turnstone",
+        "curlew",
+        "woodcock",
+        "snipe",
+        "redshank",
+        "greenshank",
+        "godwit",
+        "dowitcher",
+        "yellowlegs",
+        "phalarope",
+        "stint",
+        "stilt",
+        "avocet",
+        "plover",
+        "lapwing",
+        "killdeer",
+        "oystercatcher"
+      ]
+    },
+    "hawk": {
+      "name": "Hawk",
+      "taxon": "Accipitriformes",
+      "members": [
+        "Accipitridae",
+        "Pandionidae"
+      ],
+      "heads": [
+        "hawk",
+        "eagle",
+        "kite",
+        "harrier",
+        "buzzard",
+        "goshawk",
+        "sparrowhawk",
+        "osprey",
+        "raptor"
+      ]
+    },
+    "vulture": {
+      "name": "Vulture",
+      "taxon": "Accipitriformes",
+      "members": [
+        "Cathartidae",
+        "Gyps",
+        "Aegypius"
+      ],
+      "heads": [
+        "vulture",
+        "condor",
+        "griffon"
+      ]
+    },
+    "falcon": {
+      "name": "Falcon",
+      "taxon": "Falconidae",
+      "members": [
+        "Falconidae"
+      ],
+      "heads": [
+        "falcon",
+        "kestrel",
+        "merlin",
+        "caracara",
+        "hobby",
+        "gyrfalcon"
+      ]
+    },
+    "owl": {
+      "name": "Owl",
+      "taxon": "Strigiformes",
+      "members": [
+        "Strigiformes",
+        "Strigidae",
+        "Tytonidae"
+      ],
+      "heads": [
+        "owl",
+        "owlet"
+      ]
+    },
+    "heron": {
+      "name": "Heron",
+      "taxon": "Ardeidae",
+      "members": [
+        "Ardeidae"
+      ],
+      "heads": [
+        "heron",
+        "egret",
+        "bittern",
+        "night-heron"
+      ]
+    },
+    "cormorant": {
+      "name": "Cormorant",
+      "taxon": "Phalacrocoracidae",
+      "members": [
+        "Phalacrocoracidae"
+      ],
+      "heads": [
+        "cormorant",
+        "shag"
+      ]
+    },
+    "gannet": {
+      "name": "Gannet",
+      "taxon": "Sulidae",
+      "members": [
+        "Sulidae"
+      ],
+      "heads": [
+        "gannet",
+        "booby"
+      ]
+    },
+    "pelican": {
+      "name": "Pelican",
+      "taxon": "Pelecanidae",
+      "members": [
+        "Pelecanidae"
+      ],
+      "heads": [
+        "pelican"
+      ]
+    },
+    "stork": {
+      "name": "Stork",
+      "taxon": "Ciconiidae",
+      "members": [
+        "Ciconiidae"
+      ],
+      "heads": [
+        "stork"
+      ]
+    },
+    "crane": {
+      "name": "Crane",
+      "taxon": "Gruidae",
+      "members": [
+        "Gruidae"
+      ],
+      "heads": [
+        "crane"
+      ]
+    },
+    "rail": {
+      "name": "Rail",
+      "taxon": "Rallidae",
+      "members": [
+        "Rallidae"
+      ],
+      "heads": [
+        "rail",
+        "coot",
+        "gallinule",
+        "moorhen",
+        "crake"
+      ]
+    },
+    "loon": {
+      "name": "Loon",
+      "taxon": "Gaviidae",
+      "members": [
+        "Gaviidae"
+      ],
+      "heads": [
+        "loon",
+        "diver"
+      ]
+    },
+    "grebe": {
+      "name": "Grebe",
+      "taxon": "Podicipedidae",
+      "members": [
+        "Podicipedidae"
+      ],
+      "heads": [
+        "grebe"
+      ]
+    },
+    "flamingo": {
+      "name": "Flamingo",
+      "taxon": "Phoenicopteridae",
+      "members": [
+        "Phoenicopteridae"
+      ],
+      "heads": [
+        "flamingo"
+      ]
+    },
+    "pigeon": {
+      "name": "Pigeon",
+      "taxon": "Columbidae",
+      "members": [
+        "Columbidae"
+      ],
+      "heads": [
+        "pigeon",
+        "dove"
+      ]
+    },
+    "penguin": {
+      "name": "Penguin",
+      "taxon": "Spheniscidae",
+      "members": [
+        "Spheniscidae"
+      ],
+      "heads": [
+        "penguin"
+      ]
+    },
+    "petrel": {
+      "name": "Petrel",
+      "taxon": "Procellariidae",
+      "members": [
+        "Procellariidae"
+      ],
+      "heads": [
+        "petrel",
+        "shearwater",
+        "fulmar"
+      ]
+    },
+    "corvid": {
+      "name": "Corvid",
+      "taxon": "Corvidae",
+      "members": [
+        "Corvidae"
+      ],
+      "heads": [
+        "corvid",
+        "crow",
+        "raven",
+        "jay",
+        "magpie",
+        "rook",
+        "jackdaw",
+        "nutcracker"
+      ]
+    },
+    "songbird": {
+      "name": "Songbird",
+      "taxon": "Passeriformes",
+      "members": [
+        "Passeriformes"
+      ],
+      "heads": [
+        "songbird",
+        "passerine",
+        "sparrow",
+        "starling",
+        "thrush",
+        "robin",
+        "blackbird",
+        "grackle",
+        "tit",
+        "chickadee",
+        "titmouse",
+        "finch",
+        "warbler",
+        "swallow",
+        "martin",
+        "oriole",
+        "wren",
+        "hornero",
+        "fieldfare"
+      ]
+    },
+    "avian": {
+      "name": "Avian",
+      "taxon": "Aves",
+      "members": [
+        "Aves"
+      ],
+      "heads": [
+        "bird",
+        "avian",
+        "fowl"
+      ]
+    },
+    "swine": {
+      "name": "Swine",
+      "taxon": "Suidae",
+      "members": [
+        "Suidae"
+      ],
+      "heads": [
+        "swine",
+        "pig",
+        "piglet",
+        "hog",
+        "boar",
+        "sow"
+      ]
+    },
+    "cattle": {
+      "name": "Cattle",
+      "taxon": "Bovidae",
+      "members": [
+        "Bos",
+        "Bubalus"
+      ],
+      "heads": [
+        "cattle",
+        "cow",
+        "bull",
+        "calf",
+        "steer",
+        "heifer",
+        "buffalo",
+        "bison",
+        "bovine"
+      ]
+    },
+    "goat": {
+      "name": "Goat",
+      "taxon": "Capra",
+      "members": [
+        "Capra"
+      ],
+      "heads": [
+        "goat",
+        "kid",
+        "ibex"
+      ]
+    },
+    "canine": {
+      "name": "Canine",
+      "taxon": "Canidae",
+      "members": [
+        "Canidae"
+      ],
+      "heads": [
+        "canine",
+        "dog",
+        "puppy",
+        "wolf",
+        "coyote",
+        "fox",
+        "jackal"
+      ]
+    },
+    "feline": {
+      "name": "Feline",
+      "taxon": "Felidae",
+      "members": [
+        "Felidae"
+      ],
+      "heads": [
+        "feline",
+        "cat",
+        "kitten",
+        "lynx",
+        "bobcat",
+        "cougar",
+        "puma",
+        "lion",
+        "tiger",
+        "leopard",
+        "cheetah"
+      ]
+    },
+    "mustelid": {
+      "name": "Mustelid",
+      "taxon": "Mustelidae",
+      "members": [
+        "Mustelidae"
+      ],
+      "heads": [
+        "mustelid",
+        "mink",
+        "ferret",
+        "otter",
+        "weasel",
+        "polecat",
+        "marten",
+        "fisher",
+        "badger",
+        "stoat",
+        "wolverine"
+      ]
+    },
+    "seal": {
+      "name": "Seal",
+      "taxon": "Carnivora",
+      "members": [
+        "Phocidae",
+        "Otariidae",
+        "Odobenidae"
+      ],
+      "heads": [
+        "seal",
+        "sea lion",
+        "walrus",
+        "pinniped"
+      ]
+    },
+    "bear": {
+      "name": "Bear",
+      "taxon": "Ursidae",
+      "members": [
+        "Ursidae"
+      ],
+      "heads": [
+        "bear"
+      ]
+    },
+    "raccoon": {
+      "name": "Raccoon",
+      "taxon": "Procyonidae",
+      "members": [
+        "Procyonidae"
+      ],
+      "heads": [
+        "raccoon",
+        "coati"
+      ]
+    },
+    "skunk": {
+      "name": "Skunk",
+      "taxon": "Mephitidae",
+      "members": [
+        "Mephitidae"
+      ],
+      "heads": [
+        "skunk"
+      ]
+    },
+    "opossum": {
+      "name": "Opossum",
+      "taxon": "Didelphidae",
+      "members": [
+        "Didelphidae"
+      ],
+      "heads": [
+        "opossum",
+        "possum"
+      ]
+    },
+    "rodent": {
+      "name": "Rodent",
+      "taxon": "Rodentia",
+      "members": [
+        "Rodentia"
+      ],
+      "heads": [
+        "rodent",
+        "mouse",
+        "mice",
+        "rat",
+        "vole",
+        "squirrel",
+        "hamster",
+        "gerbil"
+      ]
+    },
+    "horse": {
+      "name": "Horse",
+      "taxon": "Equidae",
+      "members": [
+        "Equidae"
+      ],
+      "heads": [
+        "horse",
+        "equine",
+        "pony",
+        "donkey",
+        "mule",
+        "foal",
+        "zebra"
+      ]
+    },
+    "dolphin": {
+      "name": "Dolphin",
+      "taxon": "Delphinidae",
+      "members": [
+        "Delphinidae"
+      ],
+      "heads": [
+        "dolphin",
+        "orca",
+        "killer whale"
+      ]
+    },
+    "mammal": {
+      "name": "Mammal",
+      "taxon": "Mammalia",
+      "members": [
+        "Mammalia"
+      ],
+      "heads": [
+        "mammal"
+      ]
+    }
+  }
+}
