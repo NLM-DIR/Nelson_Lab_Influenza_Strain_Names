@@ -2,24 +2,96 @@
 Decode influenza isolate strain names into structured metadata.
 
 Strain name format:
-    <type>/<host>/<location>/<strain_id>/<year>
+    <type>/<host>/<location>/<strain_id>/<year>[(<subtype>)]
+
+The host segment is omitted for human samples, giving the 4-segment form:
+    <type>/<location>/<strain_id>/<year>[(<subtype>)]
+
+The host segment is the lowercased vernacular name with spaces written as
+"_" ("domestic_turkey"). Both shapes decode the host to its host_name.json
+spelling ("Domestic Turkey") when the table has it.
+
+The year carries an optional parenthesised influenza subtype, e.g.
+"2026(H5N1)". It is absent from names whose subtype was not recorded.
 
 Strain ID format:
-    <taxonomy_code>-<month>-<lab_identifier>
-    taxonomy_code = <col_dataset_key>.<col_usage_id>
+    <sequence>-<taxonomy_code>[-<uli>][-<suffix>]
+    taxonomy_code = [<host_origin>.]<col_usage_id>.<col_version>
+
+host_origin is "d" (domestic) or "w" (wild). The generator requires it for
+non-human samples other than lab passage and reverse genetics strains, but the
+reader treats it as optional so names minted before it existed still decode.
+
+col_version is an index into COL_Version, which maps it to the concrete
+Catalogue of Life dataset key the usage ID was minted against, and into
+ID_FORMATS, which gives the strain-ID layout used by names carrying that
+index. The layout is taken from the version the name itself carries, never
+from the generator's configuration, so names written against an earlier COL
+release stay readable after a new one is adopted.
+
+The suffix is optional and joins, in this order, any of "v<N>" (isolate
+version), "L" (lab passage strain) and "RG" (reverse genetics) with ".",
+e.g. "v2", "L.RG", "v2.L.RG".
 """
 
+import re
 import requests
 import pycountry
 import argparse
 import json
 import sys
 
+from strain_generator.tools import host_tools
+
 CLB_BASE_URL = "https://api.checklistbank.org"
 
 COL_Version = {
     1: 315448,
 }
+
+# Strain-ID layout used by names carrying each COL version index, given as the
+# hyphen-separated fields in order. "uli" and "suffix" are optional and may be
+# absent from a given ID; every other field is required. Keep this keyed the
+# same way as COL_Version: adopting a new COL release means adding its index to
+# both, and a name's own index is what selects its layout.
+#
+# Index 1 originally carried a lab ID ("sequence", "lab_id", "taxonomy_code",
+# "suffix"). Its layout was deliberately replaced when the lab ID was dropped,
+# so names containing a lab ID no longer decode. Do not repeat this for future
+# changes: register a new index instead. The optional "uli" was later added to
+# index 1 as a purely additive change: every ID valid before it still decodes
+# the same, because a ULI (5 uppercase letters/digits) never parses as a
+# suffix. The optional "d."/"w." host-origin prefix on the taxonomy code was
+# added the same additive way: an unprefixed taxonomy code decodes as before.
+ID_FORMATS = {
+    1: ("sequence", "taxonomy_code", "uli", "suffix"),
+}
+
+# Fields a strain ID may leave out.
+OPTIONAL_ID_FIELDS = ("uli", "suffix")
+
+# The taxonomy field of a strain ID: "[<host_origin>.]<usage_id>.<col_version>".
+TAXONOMY_RE = re.compile(
+    r"^(?:(?P<host_origin>[dw])\.)?"
+    r"(?P<usage_id>[A-Za-z0-9]+)\.(?P<col_version>\d+)$"
+)
+
+# Host-origin letter in the taxonomy code -> the value reported when decoding.
+HOST_ORIGINS = {"d": "domestic", "w": "wild"}
+
+# Optional unique laboratory identifier: exactly 5 uppercase letters/digits.
+ULI_RE = re.compile(r"^[A-Z0-9]{5}$")
+
+# Optional trailing segment of the strain ID: "v<N>", "L" and "RG", in that
+# order, joined by "." ("v2", "L.RG", "v2.L.RG"). The separators are loose
+# here; decode_isolate_suffix checks the suffix is in its canonical form.
+SUFFIX_RE = re.compile(
+    r"^(?:v(?P<version>\d+))?\.?(?P<passage>L)?\.?(?P<reverse_genetics>RG)?$"
+)
+
+# Final name segment: a 4-digit year with an optional parenthesised subtype.
+# The subtype body excludes "(", ")" and "/" so it cannot swallow a delimiter.
+YEAR_RE = re.compile(r"^(?P<year>\d{4})(?:\((?P<subtype>[^()/]+)\))?$")
 
 
 def resolve_scientific_name(dataset_key, usage_id, session=None):
@@ -67,51 +139,264 @@ def decode_location(location):
     return {"country": country_name, "subdivision": subdivision_name}
 
 
+def decode_isolate_suffix(suffix):
+    """Split the optional trailing segment of a strain ID.
+
+    Returns a tuple of (isolate_version, lab_passage, reverse_genetics),
+    where isolate_version is an int or None.
+
+    Raises:
+        ValueError: If the suffix is not some of "v<N>", "L" and "RG", in that
+                    order, joined by ".".
+    """
+    match = SUFFIX_RE.match(suffix)
+    canonical = match and ".".join(
+        part for part in (
+            match.group("version") and f"v{match.group('version')}",
+            match.group("passage"),
+            match.group("reverse_genetics"),
+        ) if part
+    )
+    if not suffix or canonical != suffix:
+        raise ValueError(
+            f"unrecognized suffix {suffix!r}; expected some of 'v<N>', 'L' and "
+            f"'RG', in that order, joined by '.' (e.g. 'v2', 'L.RG', 'v2.L.RG')"
+        )
+
+    version = match.group("version")
+    return (
+        int(version) if version else None,
+        bool(match.group("passage")),
+        bool(match.group("reverse_genetics")),
+    )
+
+
+def decode_year_segment(segment):
+    """Split the final name segment into its year and optional subtype.
+
+    Returns a tuple of (year, subtype), where year is the 4-digit string and
+    subtype is None when the name records no subtype.
+
+    Raises:
+        ValueError: If the segment is not "YYYY" or "YYYY(<subtype>)".
+    """
+    match = YEAR_RE.match(segment)
+    if not match:
+        raise ValueError(
+            f"unrecognized year segment {segment!r}; expected 'YYYY' or "
+            f"'YYYY(<subtype>)'"
+        )
+
+    return match.group("year"), match.group("subtype")
+
+
+def describe_id_format(col_version):
+    """Render an ID_FORMATS entry as a readable field template.
+
+    Args:
+        col_version: COL version index registered in ID_FORMATS.
+
+    Returns:
+        e.g. "<sequence>-[d|w.]<usage_id>.1[-<uli>][-<suffix>]".
+    """
+    rendered = ""
+    for field in ID_FORMATS[col_version]:
+        if field in OPTIONAL_ID_FIELDS:
+            rendered += f"[-<{field}>]"
+            continue
+        token = (
+            f"[d|w.]<usage_id>.{col_version}"
+            if field == "taxonomy_code" else f"<{field}>"
+        )
+        rendered += f"-{token}" if rendered else token
+    return rendered
+
+
+def id_format_variants(layout):
+    """Yield the concrete field sequences a layout can appear as.
+
+    Each field in OPTIONAL_ID_FIELDS may be present or absent, so a layout
+    matches IDs with any combination of them. Of two variants with the same
+    length, the one keeping "uli" comes first; select_id_format accepts it
+    only when that field parses as a ULI.
+
+    Args:
+        layout: An ID_FORMATS entry.
+
+    Yields:
+        Tuples of field names, longest first.
+    """
+    optional = [f for f in OPTIONAL_ID_FIELDS if f in layout]
+    variants = []
+    for mask in range(2 ** len(optional)):
+        dropped = {f for i, f in enumerate(optional) if mask >> i & 1}
+        variants.append(tuple(f for f in layout if f not in dropped))
+    yield from sorted(variants, key=lambda v: (len(v), "uli" in v), reverse=True)
+
+
+def select_id_format(parts):
+    """Pick the strain-ID layout selected by the COL version inside the ID.
+
+    A layout is accepted only when the field in its "taxonomy_code" position
+    parses as "[<host_origin>.]<usage_id>.<col_version>" and that col_version is the index the
+    layout is registered under. The version a name carries is therefore what
+    decides how the name is read.
+
+    Args:
+        parts: Hyphen-separated fields of the strain ID.
+
+    Returns:
+        Tuple of (col_version, fields, taxonomy_match), where fields names the
+        parts positionally and taxonomy_match is the TAXONOMY_RE match object.
+
+    Raises:
+        ValueError: If no registered layout fits the fields given, which
+                    covers an unknown COL version, a wrong field count, and a
+                    taxonomy code in the wrong position.
+    """
+    for col_version, layout in sorted(ID_FORMATS.items(), reverse=True):
+        for fields in id_format_variants(layout):
+            if len(parts) != len(fields):
+                continue
+            if "uli" in fields and not ULI_RE.match(parts[fields.index("uli")]):
+                continue
+            match = TAXONOMY_RE.match(parts[fields.index("taxonomy_code")])
+            if match and int(match.group("col_version")) == col_version:
+                return col_version, fields, match
+
+    expected = " or ".join(describe_id_format(v) for v in sorted(ID_FORMATS))
+    raise ValueError(
+        f"strain ID {'-'.join(parts)!r} matches no known layout; expected "
+        f"{expected}"
+    )
+
+
 def decode_strain_id(strain_id, session=None):
     """Break the strain ID into its components and resolve the taxonomy code.
 
-    strain_id = <taxonomy_code>-<lab_identifier>-<month>
-    taxonomy_code = <usage_id>.<dataset_key>
-    """
-    # Split into exactly 3 sections. The lab identifier may itself contain
-    # additional characters, so limit the split.
-    taxonomy_code, sample_id, lab_identifier, month = strain_id.split("-", 3)
+    strain_id = <sequence>-<taxonomy_code>[-<uli>][-<suffix>]
+    taxonomy_code = [<host_origin>.]<usage_id>.<version>
 
-    usage_id, dataset_key = taxonomy_code.split(".", 1)
-    dataset_key = COL_Version.get(int(dataset_key))
+    The layout is chosen from the version the taxonomy code carries, so the ID
+    says how it should be read; see ID_FORMATS.
+
+    Raises:
+        ValueError: If the ID matches no registered layout or the suffix is
+                    unrecognized. A sequence containing a hyphen, or an older
+                    name that still carries a lab ID, will trip this.
+    """
+    parts = strain_id.split("-")
+    col_version, fields, taxonomy_match = select_id_format(parts)
+    values = dict(zip(fields, parts))
+
+    if "suffix" in values:
+        isolate_version, lab_passage, reverse_genetics = decode_isolate_suffix(
+            values["suffix"]
+        )
+    else:
+        isolate_version, lab_passage, reverse_genetics = None, False, False
+
+    usage_id = taxonomy_match.group("usage_id")
+    host_origin = HOST_ORIGINS.get(taxonomy_match.group("host_origin"))
+    dataset_key = COL_Version.get(col_version)
 
     scientific_name = resolve_scientific_name(dataset_key, usage_id, session=session)
 
     return {
-        "taxonomy_code": taxonomy_code,
+        "taxonomy_code": values["taxonomy_code"],
         "col_dataset_key": dataset_key,
         "col_usage_id": usage_id,
+        "host_origin": host_origin,
         "scientific_name": scientific_name,
-        "month": month,
-        "lab_identifier": f"{sample_id}-{lab_identifier}",
+        "sequence": values["sequence"],
+        "uli": values.get("uli"),
+        "isolate_version": isolate_version,
+        "lab_passage": lab_passage,
+        "reverse_genetics": reverse_genetics,
     }
 
 
+def _vernacular_from_scientific(scientific_name):
+    """Recover a vernacular name for a name whose host segment was omitted.
+
+    Consults only the curated local host table, so this adds no network
+    calls. Returns None when the taxon has no curated vernacular name.
+    """
+    if not scientific_name:
+        return None
+    return host_tools.species_vernacular(scientific_name)
+
+
 def decode_strain_name(strain_name, session=None):
-    """Decode a full influenza strain name into a metadata dictionary."""
-    virus_type, host, location, strain_id, year = strain_name.split("/")
+    """Decode a full influenza strain name into a metadata dictionary.
+
+    Accepts both name shapes produced by the generator:
+
+    * 5 segments — <type>/<host>/<location>/<strain_id>/<year>
+    * 4 segments — <type>/<location>/<strain_id>/<year>, produced when the
+      host segment was dropped because the host resolved to "Human" or could
+      not be resolved to a vernacular name at all.
+
+    For the 4-segment form the vernacular name is recovered from the taxon
+    that the COL usage ID resolves to, so a human sample round-trips back to
+    "Human". "host_segment_omitted" records which shape was decoded.
+
+    For the 5-segment form, "_" in the host segment is read back as a space
+    and the result is given in its host-table spelling, so both shapes agree
+    ("red_junglefowl" and an omitted Gallus gallus segment both decode to
+    "Red Junglefowl").
+
+    "host.origin" is "domestic" or "wild" from the taxonomy code's prefix, or
+    None when the name carries none (human samples, lab passage or reverse
+    genetics strains, and names minted before the prefix existed).
+
+    "subtype" carries the parenthesised subtype from the year segment, or
+    None when the name records none.
+
+    Raises:
+        ValueError: If the name has neither 4 nor 5 slash-separated segments,
+                    or if the strain ID or year segment is malformed.
+    """
+    parts = strain_name.split("/")
+    if len(parts) == 5:
+        virus_type, host, location, strain_id, year_segment = parts
+        host = host_tools.segment_to_vernacular(host)
+        host_omitted = False
+    elif len(parts) == 4:
+        virus_type, location, strain_id, year_segment = parts
+        host, host_omitted = None, True
+    else:
+        raise ValueError(
+            f"expected 4 or 5 slash-separated segments, got {len(parts)}"
+        )
+
+    year, subtype = decode_year_segment(year_segment)
 
     sid = decode_strain_id(strain_id, session=session)
 
+    if host_omitted:
+        host = _vernacular_from_scientific(sid["scientific_name"])
+
     return {
         "virus_type": virus_type,
+        "subtype": subtype,
         "host": {
             "vernacular_name": host,
             "scientific_name": sid["scientific_name"],
             "col_dataset_key": sid["col_dataset_key"],
             "col_usage_id": sid["col_usage_id"],
+            "host_segment_omitted": host_omitted,
+            "origin": sid["host_origin"],
         },
         "location": decode_location(location),
         "date": {
-            "month": sid["month"],
             "year": year,
         },
-        "lab_identifier": sid["lab_identifier"],
+        "sequence": sid["sequence"],
+        "uli": sid["uli"],
+        "isolate_version": sid["isolate_version"],
+        "lab_passage": sid["lab_passage"],
+        "reverse_genetics": sid["reverse_genetics"],
     }
 
 
@@ -120,7 +405,8 @@ def main(argv=None):
         prog="strain-read",
         description=(
             "Decode an influenza isolate strain name into structured metadata. "
-            "Strain name format: <type>/<host>/<location>/<strain_id>/<year>"
+            "Strain name format: "
+            "<type>/<host>/<location>/<strain_id>/<year>[(<subtype>)]"
         ),
     )
     parser.add_argument(
@@ -128,7 +414,7 @@ def main(argv=None):
         metavar="STRAIN_NAME",
         help=(
             "The strain name to decode, e.g. "
-            "'A/Domestic Chicken/US-NY/3F72J.1-002_NEL26-06/2026'"
+            "'A/chicken/US-NY/002-d.3F72J.1-v2.L/2026(H5N1)'"
         ),
     )
     parser.add_argument(

@@ -1,0 +1,39 @@
+{
+  "CN": {
+    "Inner Mongolia": "CN-NM",
+    "Tibet": "CN-XZ"
+  },
+  "DE": {
+    "Bavaria": "DE-BY",
+    "Hesse": "DE-HE",
+    "Lower Saxony": "DE-NI",
+    "Mecklenburg-Western Pomerania": "DE-MV",
+    "North Rhine-Westphalia": "DE-NW",
+    "Rhineland-Palatinate": "DE-RP",
+    "Saxony": "DE-SN",
+    "Saxony-Anhalt": "DE-ST",
+    "Thuringia": "DE-TH"
+  },
+  "EG": {
+    "Alexandria": "EG-ALX",
+    "Cairo": "EG-C"
+  },
+  "FR": {
+    "Brittany": "FR-BRE",
+    "Corsica": "FR-20R",
+    "Normandy": "FR-NOR"
+  },
+  "MX": {
+    "Mexico City": "MX-CMX"
+  },
+  "RU": {
+    "Moscow": "RU-MOW",
+    "Moscow Oblast": "RU-MOS",
+    "Saint Petersburg": "RU-SPE"
+  },
+  "US": {
+    "D.C.": "US-DC",
+    "Washington DC": "US-DC",
+    "Washington D.C.": "US-DC"
+  }
+}

@@ -1,10 +1,18 @@
-import pycountry
-
-from strain_generator import logger
-from strain_generator.tools import utils
+import json
+import logging
 import unicodedata
-# import difflib
+from functools import lru_cache
+from importlib.resources import files
+
+import country_converter as coco
+import pycountry
 from rapidfuzz import process, fuzz
+
+# coco logs its own warning for unmatched names; we raise a clearer error instead.
+logging.getLogger("country_converter.country_converter").setLevel(logging.ERROR)
+
+SCORE_CUTOFF = 70
+AMBIGUITY_MARGIN = 5  # top two fuzzy scores closer than this are rejected
 
 
 def normalize(s):
@@ -13,73 +21,87 @@ def normalize(s):
     return " ".join(s.lower().split())
 
 
+def _score(query, name, **kwargs):
+    # Also score against the name's leading words so "Yunnan" matches
+    # "Yunnan Sheng" without letting "York" match "New York".
+    prefix = " ".join(name.split()[:len(query.split())])
+    return max(fuzz.token_sort_ratio(query, name), fuzz.token_sort_ratio(query, prefix))
+
+
+@lru_cache(maxsize=1)
+def _load_location_aliases() -> dict:
+    """Curated overrides for names pycountry or fuzzy matching gets wrong.
+
+    Returns ``{alpha_2: {normalized name: subdivision code}}``.
+    """
+    alias_json = files("strain_generator.data").joinpath("location_aliases.json")
+    with open(alias_json, "r", encoding="utf-8") as f:
+        table = json.load(f)
+    return {cc: {normalize(k): v for k, v in names.items()} for cc, names in table.items()}
+
+
+@lru_cache(maxsize=None)
+def _converter():
+    # Building the converter compiles every country regex (~0.5 s); do it once.
+    return coco.CountryConverter()
+
+
+def resolve_country(country_name):
+    """Resolve a country name or ISO code to its pycountry record.
+
+    Raises:
+        ValueError: if coco finds no match or more than one.
+    """
+    alpha_2 = _converter().convert(country_name, to="ISO2")
+    if not isinstance(alpha_2, str) or alpha_2 == "not found":
+        raise ValueError(f"could not match country {country_name!r} to an ISO 3166 entry")
+    return pycountry.countries.get(alpha_2=alpha_2)
+
+
 def find_subdivision(subdivisions, subdivision_name):
+    """Match a subdivision name or code against one country's subdivisions.
+
+    Accepts the full ISO code (``US-VA``), its local part (``VA``), or a name,
+    fuzzily matched after case/accent normalization.
+
+    Raises:
+        ValueError: if nothing matches, or the best two name matches score
+            within ``AMBIGUITY_MARGIN`` of each other.
+    """
     subs = list(subdivisions)
-    choices = {normalize(s.name): s.code for s in subs}
-    match = process.extractOne(
+    query = subdivision_name.strip().upper()
+    for s in subs:
+        if query in (s.code, s.code.split("-", 1)[1]):
+            return s.code
+
+    matches = process.extract(
         normalize(subdivision_name),
-        choices.keys(),
-        scorer=fuzz.token_sort_ratio,   # handles word reordering
-        score_cutoff=70,
+        [normalize(s.name) for s in subs],
+        scorer=_score,
+        score_cutoff=SCORE_CUTOFF,
+        limit=2,
     )
-    if match:
-        return choices[match[0]]
-    return None
+    if not matches:
+        raise ValueError(f"no ISO 3166-2 subdivision matches {subdivision_name!r}")
+    if len(matches) == 2 and matches[0][1] - matches[1][1] < AMBIGUITY_MARGIN:
+        first, second = (subs[m[2]] for m in matches)
+        raise ValueError(
+            f"subdivision {subdivision_name!r} is ambiguous: "
+            f"{first.name} ({first.code}) or {second.name} ({second.code})"
+        )
+    return subs[matches[0][2]].code
 
 
 def get_country_and_subdivision(country_name, subdivision_name=None):
-    country = pycountry.countries.search_fuzzy(country_name)[0]
+    country = resolve_country(country_name)
     display_name = getattr(
         country, "common_name",
         getattr(country, "name", getattr(country, "official_name", None)),
     )
-    if subdivision_name is None:
+    if not (subdivision_name or "").strip():
         return display_name, "0"
-    subdivisions = pycountry.subdivisions.get(country_code=country.alpha_2)
-    subdivision_code = find_subdivision(subdivisions, subdivision_name)
-    if subdivision_code is None:
-        logger.warning(f"No match found for subdivision: {subdivision_name}")
-        return display_name, country.alpha_2
-    return display_name, subdivision_code
-
-
-def get_local_code(subdivision_code):
-    if len(subdivision_code) == 2:
-        return "0"
-    else:
-        local_string = subdivision_code.split("-")[1]
-        return subdivision_to_code(local_string)
-
-
-def subdivision_to_code(subdivision_code: str) -> str:
-    # This could be refactored. It is a little awkward.
-    if not subdivision_code:
-        return "0"
-
-    code = ""
-    subdivision_code.replace("-", "")
-
-    for char in subdivision_code:
-        code += utils.letter_to_num(char)
-    return code
-
-
-def num_to_letter(num: str) -> str:
-    """
-    Takes two-digit position in alphabet and returns the letter.
-    "01" -> "a"
-    """
-    return chr(int(num) + 96)
-
-
-def code_to_subdivision(code: str) -> str:
-    result = ""
-    i = 0
-    while i < len(code):
-        if code[i] == "-":
-            result += "-"
-            i += 1
-        else:
-            result += num_to_letter(code[i:i + 2]).upper()
-            i += 2
-    return result
+    alias = _load_location_aliases().get(country.alpha_2, {}).get(normalize(subdivision_name))
+    if alias:
+        return display_name, alias
+    subdivisions = pycountry.subdivisions.get(country_code=country.alpha_2) or []
+    return display_name, find_subdivision(subdivisions, subdivision_name)

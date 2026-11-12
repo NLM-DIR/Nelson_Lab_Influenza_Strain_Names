@@ -1,0 +1,5 @@
+virus_type,host,location,country,sequence,lab_id,date,strain_name
+A,Homo sapiens,Virginia,USA,001,MN.26A,2026-06-30,A/US-VA/6MB3T.1-001-MN.26A/2026
+A,Gallus gallus,Alaska,USA,002,MN.26A,2026-06-30,A/Red Junglefowl/US-AK/3F72J.1-002-MN.26A/2026
+A,gallus gallus domesticus,New York,USA,002,MN.26A,2026-06-30,A/Chicken/US-NY/3F72J.1-002-MN.26A/2026
+A,Anas platyrhynchos,Ontario,Canada,125,MN.26A,2024-02-10,A/Wild Duck/CA-ON/DGP6.1-125-MN.26A/2024
